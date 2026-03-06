@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { useExtraProjects } from "../hooks/useContent";
+import { useProjectsContent } from "../hooks/useContent";
 
 const projectLinks = [
   { github: "https://git.cs.usask.ca/xpo285/cmpt370-g29", live: "#" },
@@ -10,11 +10,14 @@ const projectLinks = [
 
 export default function Projects() {
   const { t } = useLanguage();
-  const extras = useExtraProjects();
-  const allItems = [
-    ...t.projects.items.map((p, i) => ({ ...p, github: projectLinks[i]?.github, live: projectLinks[i]?.live })),
-    ...extras,
-  ];
+  const { items, usingDb, hasServerData } = useProjectsContent();
+  const allItems =
+    hasServerData || usingDb
+      ? items
+      : [
+          ...t.projects.items.map((p, i) => ({ ...p, github: projectLinks[i]?.github, live: projectLinks[i]?.live })),
+          ...items,
+        ];
 
   return (
     <section id="projects" className="py-24 px-6">
