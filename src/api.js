@@ -26,7 +26,10 @@ function getAuthHeader() {
 export async function getExperiences() {
   if (isSupabaseConfigured()) {
     try {
-      const { data, error } = await supabase.from("experiences").select("*").order("id", { ascending: true });
+      const { data, error } = await supabase
+        .from("experiences")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []).map((r) => ({ ...r, id: Number(r.id) }));
     } catch {

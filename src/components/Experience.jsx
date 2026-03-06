@@ -1,14 +1,16 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { useExtraExperiences } from "../hooks/useContent";
+import { useExperiencesContent } from "../hooks/useContent";
 
 export default function Experience() {
   const { t } = useLanguage();
-  const extras = useExtraExperiences();
-  const allRoles = [
-    ...t.experience.roles,
-    ...extras.map((e) => ({ title: e.title, company: e.company, period: e.period, description: e.description })),
-  ];
+  const { items, usingDb, hasServerData } = useExperiencesContent();
+  const allRoles = (hasServerData || usingDb)
+    ? items.map((e) => ({ title: e.title, company: e.company, period: e.period, description: e.description }))
+    : [
+        ...t.experience.roles,
+        ...items.map((e) => ({ title: e.title, company: e.company, period: e.period, description: e.description })),
+      ];
 
   return (
     <section id="experience" className="py-24 px-6 bg-glass-section backdrop-blur-sm">
