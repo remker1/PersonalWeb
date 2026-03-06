@@ -2,16 +2,29 @@ import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { galleryPhotos } from "../data/photos";
+import { usePhotosContent } from "../hooks/useContent";
 
 export default function PhotographyGallery() {
   const { t } = useLanguage();
+  const { items, usingDb } = usePhotosContent();
   const [photoSizes, setPhotoSizes] = useState({});
   const [activeIndex, setActiveIndex] = useState(null);
+
+  const allPhotos = useMemo(
+    () =>
+      usingDb
+        ? items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" }))
+        : [
+            ...galleryPhotos,
+            ...items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" })),
+          ],
+    [items, usingDb]
+  );
 
   useEffect(() => {
     let cancelled = false;
 
-    galleryPhotos.forEach((photo) => {
+    allPhotos.forEach((photo) => {
       const img = new Image();
       img.src = photo.src;
       img.onload = () => {
@@ -31,15 +44,15 @@ export default function PhotographyGallery() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [allPhotos]);
 
   const arrangedPhotos = useMemo(() => {
-    return [...galleryPhotos].sort((a, b) => {
+    return [...allPhotos].sort((a, b) => {
       const aArea = photoSizes[a.id]?.area || 0;
       const bArea = photoSizes[b.id]?.area || 0;
       return bArea - aArea;
     });
-  }, [photoSizes]);
+  }, [allPhotos, photoSizes]);
 
   useEffect(() => {
     const onKeyDown = (event) => {

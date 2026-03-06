@@ -15,7 +15,7 @@ backend/data/*.json
 *.local
 .env
 .env.*
-!.env.example
+.env.example
 
 # Editor directories and files
 .vscode/*
@@ -28,3 +28,6 @@ backend/data/*.json
 *.sln
 *.sw?
 *.claude
+
+DEPLOY.md
+README.md

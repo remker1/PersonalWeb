@@ -1,15 +1,17 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { featuredPhotos } from "../data/photos";
-import { useExtraPhotos } from "../hooks/useContent";
+import { usePhotosContent } from "../hooks/useContent";
 
 export default function Photography() {
   const { t } = useLanguage();
-  const extraPhotos = useExtraPhotos();
-  const allPhotos = [
-    ...featuredPhotos,
-    ...extraPhotos.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" })),
-  ];
+  const { items, usingDb } = usePhotosContent();
+  const allPhotos = usingDb
+    ? items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" }))
+    : [
+        ...featuredPhotos,
+        ...items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" })),
+      ];
 
   return (
     <section id="photography" className="py-24 px-6 bg-glass-section backdrop-blur-sm">

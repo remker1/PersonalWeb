@@ -50,7 +50,10 @@ This project is set up to run on **Vercel** (frontend + serverless API) with **S
 
 ## 4. Admin password
 
-Set `ADMIN_PASSWORD` in Vercel (server-side). When you visit `/admin`, you’ll enter this password; the Admin page verifies it against `/api/admin` and stores it only in `sessionStorage` for that browser session.
+The password you set in **ADMIN_PASSWORD** on Vercel must match the one in the code so you can log in to the Admin page. Update it in one place:
+
+- **Option A**: Change `ADMIN_PASSWORD` in Vercel and in `src/pages/Admin.jsx` (constant `ADMIN_PASSWORD`) to the same value.
+- **Option B**: Use only env: you’d need to expose a build-time env to the client (e.g. `VITE_ADMIN_PASSWORD`) and use it in Admin.jsx. For simplicity, keep the constant in Admin.jsx in sync with Vercel’s `ADMIN_PASSWORD`.
 
 ## 5. Local development with Supabase
 
@@ -72,3 +75,28 @@ Set `ADMIN_PASSWORD` in Vercel (server-side). When you visit `/admin`, you’ll 
 - **Vercel**: hosts the built Vite app and the serverless function `api/admin.js`.
 - **Supabase**: stores experiences, projects, photos, and contact messages; RLS allows public read for content and public insert for messages; admin actions go through the serverless API with the service role.
 - **GitHub**: connect the repo in Vercel so every push to the main branch triggers a new deployment.
+
+## 7. Seeding existing content into Supabase
+
+To move your current built-in content (from `translations.en`) into the database:
+
+1. Ensure `.env.local` has:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+2. Run:
+
+```bash
+npm run seed:supabase
+```
+
+This will replace the rows in `experiences` and `projects` (you can set `SEED_REPLACE_ALL=0` to only insert).
+
+
+Anon Key
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaWJubGd4b3B1b3ZjZHViendyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NjIxMjgsImV4cCI6MjA4ODMzODEyOH0.Lbrqv8KFi0G-8SvUoAl2bclUNf8PQNxsBHuoz-pGBlo
+
+Database URL
+https://yhibnlgxopuovcdubzwr.supabase.co
+
+service role key:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InloaWJubGd4b3B1b3ZjZHViendyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Mjc2MjEyOCwiZXhwIjoyMDg4MzM4MTI4fQ.RgK0xnS86Ldxx3G_lOwB-Oylu7oeNOrRiP3FqxXbED0
