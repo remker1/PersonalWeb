@@ -1,12 +1,43 @@
-import { motion } from "motion/react";
+import { useRef } from "react";
+import { motion, useScroll, useSpring, useTransform } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Hero() {
   const { t } = useLanguage();
+  const sectionRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+
+  // Apple-like scroll linkage: gentle lift + scale + fade
+  const p = useSpring(scrollYProgress, { stiffness: 180, damping: 30, mass: 0.6 });
+  const contentY = useTransform(p, [0, 1], [0, -90]);
+  const contentScale = useTransform(p, [0, 1], [1, 0.92]);
+  const contentOpacity = useTransform(p, [0, 0.85, 1], [1, 0.55, 0.25]);
+  const glowOpacity = useTransform(p, [0, 0.6, 1], [0.9, 0.45, 0]);
+  const glowScale = useTransform(p, [0, 1], [1, 1.08]);
+  const glowBlur = useTransform(p, [0, 1], ["blur(0px)", "blur(10px)"]);
 
   return (
-    <section className="min-h-screen flex items-center justify-center px-6">
-      <div className="max-w-3xl text-center">
+    <section ref={sectionRef} className="min-h-screen flex items-center justify-center px-6">
+      <motion.div
+        className="relative max-w-3xl text-center"
+        style={{ y: contentY, scale: contentScale, opacity: contentOpacity }}
+      >
+        {/* Subtle “product glow” behind the headline */}
+        <motion.div
+          aria-hidden="true"
+          className="absolute left-1/2 top-12 -translate-x-1/2 w-[min(760px,92vw)] h-[380px] rounded-full pointer-events-none"
+          style={{
+            opacity: glowOpacity,
+            scale: glowScale,
+            filter: glowBlur,
+            background:
+              "radial-gradient(closest-side, rgba(154, 196, 168, 0.28) 0%, rgba(154, 196, 168, 0.10) 35%, rgba(154, 196, 168, 0) 70%)",
+          }}
+        />
+
         <motion.p
           className="text-accent text-sm font-medium tracking-wide uppercase mb-4"
           initial={{ opacity: 0, y: 20 }}
@@ -58,7 +89,7 @@ export default function Hero() {
             {t.hero.getInTouch}
           </a>
         </motion.div>
-      </div>
+      </motion.div>
     </section>
   );
 }

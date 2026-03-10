@@ -50,10 +50,17 @@ export function useProjectsContent() {
 export function usePhotosContent() {
   const usingDb = isSupabaseConfigured();
   const [items, setItems] = useState(() => (usingDb ? [] : getExtraPhotos()));
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    getPhotos().then(setItems).catch(() => {});
+    getPhotos()
+      .then((data) => {
+        setItems(data);
+        setHasFetched(true);
+      })
+      .catch(() => setHasFetched(true));
   }, []);
 
-  return { items, usingDb };
+  const hasServerData = hasFetched && items.length > 0;
+  return { items, usingDb, hasServerData };
 }
