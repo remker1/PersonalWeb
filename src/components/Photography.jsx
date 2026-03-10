@@ -5,8 +5,8 @@ import { usePhotosContent } from "../hooks/useContent";
 
 export default function Photography() {
   const { t } = useLanguage();
-  const { items, usingDb } = usePhotosContent();
-  const allPhotos = usingDb
+  const { items, usingDb, hasServerData } = usePhotosContent();
+  const allPhotos = hasServerData || usingDb
     ? items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" }))
     : [
         ...featuredPhotos,
@@ -43,7 +43,7 @@ export default function Photography() {
         </motion.p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {allPhotos.map((photo, i) => (
+          {allPhotos.slice(0, 8).map((photo, i) => (
             <motion.div
               key={photo.id}
               className="aspect-square bg-glass-surface backdrop-blur-md border border-border rounded-lg overflow-hidden group"
