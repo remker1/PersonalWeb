@@ -6,19 +6,19 @@ import { usePhotosContent } from "../hooks/useContent";
 
 export default function PhotographyGallery() {
   const { t } = useLanguage();
-  const { items, usingDb } = usePhotosContent();
+  const { items, usingDb, hasServerData } = usePhotosContent();
   const [photoSizes, setPhotoSizes] = useState({});
   const [activeIndex, setActiveIndex] = useState(null);
 
   const allPhotos = useMemo(
     () =>
-      usingDb
+      hasServerData || usingDb
         ? items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" }))
         : [
             ...galleryPhotos,
             ...items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" })),
           ],
-    [items, usingDb]
+    [items, usingDb, hasServerData]
   );
 
   useEffect(() => {
