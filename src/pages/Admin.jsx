@@ -112,22 +112,71 @@ function AdminPanel() {
   }, []);
 
   // Experience form
-  const [expForm, setExpForm] = useState({ title: "", company: "", period: "", description: "" });
+  const [expForm, setExpForm] = useState({ title: "", company: "", startDate: "", endDate: "", isPresent: false, description: "" });
+  const [editingExpId, setEditingExpId] = useState(null);
+
+  const formatPeriod = (startDate, endDate, isPresent) => {
+    const fmt = (d) => {
+      if (!d) return "";
+      const [y, m] = d.split("-");
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${months[parseInt(m, 10) - 1]} ${y}`;
+    };
+    const start = fmt(startDate);
+    const end = isPresent ? "Present" : fmt(endDate);
+    if (!start && !end) return "";
+    return `${start} - ${end}`;
+  };
+
+  const parsePeriodToForm = (period) => {
+    if (!period) return { startDate: "", endDate: "", isPresent: false };
+    const isPresent = /present/i.test(period);
+    const months = { jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06", jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12" };
+    const parts = period.split(/\s*[-–]\s*/);
+    const parse = (s) => {
+      if (!s) return "";
+      const m = s.trim().match(/([a-z]{3})\s+(\d{4})/i);
+      if (m) return `${m[2]}-${months[m[1].toLowerCase()] || "01"}`;
+      const y = s.trim().match(/^(\d{4})$/);
+      if (y) return `${y[1]}-01`;
+      return "";
+    };
+    return { startDate: parse(parts[0]), endDate: isPresent ? "" : parse(parts[1]), isPresent };
+  };
   // Project form
   const [projForm, setProjForm] = useState({ title: "", description: "", tags: "", github: "", live: "" });
+  const [editingProjId, setEditingProjId] = useState(null);
   // Photo form
   const [photoForm, setPhotoForm] = useState({ url: "", alt: "" });
   const [isDragOver, setIsDragOver] = useState(false);
   const [photoError, setPhotoError] = useState("");
 
+  const emptyExpForm = { title: "", company: "", startDate: "", endDate: "", isPresent: false, description: "" };
+
   const addExperience = async (e) => {
     e.preventDefault();
-    const newItem = { ...expForm, id: Date.now() };
+    const period = formatPeriod(expForm.startDate, expForm.endDate, expForm.isPresent);
+    const saveData = { title: expForm.title, company: expForm.company, period, description: expForm.description };
+    if (editingExpId) {
+      const updated = experiences.map((x) =>
+        x.id === editingExpId ? { ...x, ...saveData } : x
+      );
+      setExperiences(updated);
+      if (apiAvailable) {
+        try { await apiSetExperiences(updated); } catch {}
+      } else {
+        saveExtraExperiences(updated);
+      }
+      setEditingExpId(null);
+      setExpForm(emptyExpForm);
+      return;
+    }
+    const newItem = { ...saveData, id: Date.now() };
     if (apiAvailable) {
       try {
         const saved = await apiAddExperience(newItem);
         setExperiences((prev) => [...prev, saved]);
-        setExpForm({ title: "", company: "", period: "", description: "" });
+        setExpForm(emptyExpForm);
         return;
       } catch {
         // fallback to localStorage
@@ -136,7 +185,18 @@ function AdminPanel() {
     const updated = [...experiences, newItem];
     setExperiences(updated);
     saveExtraExperiences(updated);
-    setExpForm({ title: "", company: "", period: "", description: "" });
+    setExpForm(emptyExpForm);
+  };
+
+  const startEditExperience = (exp) => {
+    setEditingExpId(exp.id);
+    const { startDate, endDate, isPresent } = parsePeriodToForm(exp.period);
+    setExpForm({ title: exp.title, company: exp.company, startDate, endDate, isPresent, description: exp.description });
+  };
+
+  const cancelEditExperience = () => {
+    setEditingExpId(null);
+    setExpForm(emptyExpForm);
   };
 
   const removeExperience = async (id) => {
@@ -156,6 +216,22 @@ function AdminPanel() {
 
   const addProject = async (e) => {
     e.preventDefault();
+    if (editingProjId) {
+      const updated = projects.map((x) =>
+        x.id === editingProjId
+          ? { ...x, ...projForm, tags: projForm.tags.split(",").map((t) => t.trim()).filter(Boolean) }
+          : x
+      );
+      setProjects(updated);
+      if (apiAvailable) {
+        try { await apiSetProjects(updated); } catch {}
+      } else {
+        saveExtraProjects(updated);
+      }
+      setEditingProjId(null);
+      setProjForm({ title: "", description: "", tags: "", github: "", live: "" });
+      return;
+    }
     const item = {
       ...projForm,
       tags: projForm.tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -174,6 +250,22 @@ function AdminPanel() {
     const updated = [...projects, item];
     setProjects(updated);
     saveExtraProjects(updated);
+    setProjForm({ title: "", description: "", tags: "", github: "", live: "" });
+  };
+
+  const startEditProject = (proj) => {
+    setEditingProjId(proj.id);
+    setProjForm({
+      title: proj.title,
+      description: proj.description,
+      tags: Array.isArray(proj.tags) ? proj.tags.join(", ") : (proj.tags || ""),
+      github: proj.github || "",
+      live: proj.live || "",
+    });
+  };
+
+  const cancelEditProject = () => {
+    setEditingProjId(null);
     setProjForm({ title: "", description: "", tags: "", github: "", live: "" });
   };
 
@@ -317,11 +409,38 @@ function AdminPanel() {
                 <input className={inputClass} placeholder="Job title" required value={expForm.title} onChange={(e) => setExpForm({ ...expForm, title: e.target.value })} />
                 <input className={inputClass} placeholder="Company" required value={expForm.company} onChange={(e) => setExpForm({ ...expForm, company: e.target.value })} />
               </div>
-              <input className={inputClass} placeholder="Period (e.g. 2023 - Present)" required value={expForm.period} onChange={(e) => setExpForm({ ...expForm, period: e.target.value })} />
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">Start</label>
+                  <input type="month" className={inputClass} required value={expForm.startDate} onChange={(e) => setExpForm({ ...expForm, startDate: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-xs text-text-muted mb-1">End</label>
+                  <input type="month" className={`${inputClass} ${expForm.isPresent ? "opacity-40 pointer-events-none" : ""}`} value={expForm.isPresent ? "" : expForm.endDate} onChange={(e) => setExpForm({ ...expForm, endDate: e.target.value })} disabled={expForm.isPresent} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpForm({ ...expForm, isPresent: !expForm.isPresent, endDate: "" })}
+                  className={`px-3 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    expForm.isPresent
+                      ? "bg-accent/15 border-accent text-accent"
+                      : "border-border text-text-muted hover:text-text-primary hover:border-text-muted"
+                  }`}
+                >
+                  Present
+                </button>
+              </div>
               <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Description" required value={expForm.description} onChange={(e) => setExpForm({ ...expForm, description: e.target.value })} />
-              <button type="submit" className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-                Add Experience
-              </button>
+              <div className="flex gap-2">
+                <button type="submit" className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
+                  {editingExpId ? "Save Changes" : "Add Experience"}
+                </button>
+                {editingExpId && (
+                  <button type="button" onClick={cancelEditExperience} className="px-4 py-2 border border-border text-text-secondary text-sm font-medium rounded-lg hover:text-text-primary transition-colors">
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
             <div className="mb-8">
               <p className="text-xs uppercase tracking-wide text-text-muted mb-2">Live Preview</p>
@@ -330,7 +449,7 @@ function AdminPanel() {
                   {expForm.title || "Job title"}
                 </p>
                 <p className="text-accent text-xs">
-                  {(expForm.company || "Company") + " · " + (expForm.period || "Period")}
+                  {(expForm.company || "Company") + " · " + (formatPeriod(expForm.startDate, expForm.endDate, expForm.isPresent) || "Period")}
                 </p>
                 <p className="text-text-secondary text-xs mt-1 line-clamp-2">
                   {expForm.description || "Description preview..."}
@@ -361,18 +480,26 @@ function AdminPanel() {
             )}
             <div className="space-y-3">
               {experiences.map((exp) => (
-                <div key={exp.id} className="bg-glass-surface backdrop-blur-md border border-border rounded-lg p-4 flex items-start justify-between gap-4">
+                <div key={exp.id} className={`bg-glass-surface backdrop-blur-md border rounded-lg p-4 flex items-start justify-between gap-4 ${editingExpId === exp.id ? "border-accent" : "border-border"}`}>
                   <div>
                     <p className="text-text-primary font-medium text-sm">{exp.title}</p>
                     <p className="text-accent text-xs">{exp.company} &middot; {exp.period}</p>
                     <p className="text-text-secondary text-xs mt-1 line-clamp-2">{exp.description}</p>
                   </div>
-                  <button
-                    onClick={() => removeExperience(exp.id)}
-                    className="shrink-0 mt-1 text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-red-400 hover:border-red-400/50 transition-colors"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-1.5 shrink-0 mt-1">
+                    <button
+                      onClick={() => startEditExperience(exp)}
+                      className="text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-accent hover:border-accent/50 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => removeExperience(exp.id)}
+                      className="text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-red-400 hover:border-red-400/50 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -390,9 +517,16 @@ function AdminPanel() {
                 <input className={inputClass} placeholder="GitHub URL (optional)" value={projForm.github} onChange={(e) => setProjForm({ ...projForm, github: e.target.value })} />
                 <input className={inputClass} placeholder="Live URL (optional)" value={projForm.live} onChange={(e) => setProjForm({ ...projForm, live: e.target.value })} />
               </div>
-              <button type="submit" className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-                Add Project
-              </button>
+              <div className="flex gap-2">
+                <button type="submit" className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
+                  {editingProjId ? "Save Changes" : "Add Project"}
+                </button>
+                {editingProjId && (
+                  <button type="button" onClick={cancelEditProject} className="px-4 py-2 border border-border text-text-secondary text-sm font-medium rounded-lg hover:text-text-primary transition-colors">
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
             <div className="mb-8">
               <p className="text-xs uppercase tracking-wide text-text-muted mb-2">Live Preview</p>
@@ -438,7 +572,7 @@ function AdminPanel() {
             )}
             <div className="space-y-3">
               {projects.map((proj) => (
-                <div key={proj.id} className="bg-glass-surface backdrop-blur-md border border-border rounded-lg p-4 flex items-start justify-between gap-4">
+                <div key={proj.id} className={`bg-glass-surface backdrop-blur-md border rounded-lg p-4 flex items-start justify-between gap-4 ${editingProjId === proj.id ? "border-accent" : "border-border"}`}>
                   <div>
                     <p className="text-text-primary font-medium text-sm">{proj.title}</p>
                     <p className="text-text-secondary text-xs mt-1 line-clamp-2">{proj.description}</p>
@@ -448,12 +582,20 @@ function AdminPanel() {
                       ))}
                     </div>
                   </div>
-                  <button
-                    onClick={() => removeProject(proj.id)}
-                    className="shrink-0 mt-1 text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-red-400 hover:border-red-400/50 transition-colors"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-1.5 shrink-0 mt-1">
+                    <button
+                      onClick={() => startEditProject(proj)}
+                      className="text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-accent hover:border-accent/50 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => removeProject(proj.id)}
+                      className="text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-red-400 hover:border-red-400/50 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
