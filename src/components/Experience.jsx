@@ -4,17 +4,56 @@ import { useExperiencesContent } from "../hooks/useContent";
 import translations from "../data/translations";
 
 export default function Experience() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { items } = useExperiencesContent();
-  // Always show translated roles first; append only DB items whose titles
-  // don't already exist in the translations (dedup against all languages).
-  const translatedTitles = new Set(
+
+  // Build override map: admin items keyed by translationKey or title match
+  const allTranslatedTitles = new Set(
     Object.values(translations).flatMap((tr) => tr.experience.roles.map((r) => r.title))
   );
-  const extras = items
-    .filter((e) => !translatedTitles.has(e.title))
-    .map((e) => ({ title: e.title, company: e.company, period: e.period, description: e.description }));
-  const allRoles = [...t.experience.roles, ...extras];
+  const translationIdByTitle = new Map();
+  Object.values(translations).forEach((tr) =>
+    tr.experience.roles.forEach((r) => { if (r.id) translationIdByTitle.set(r.title, r.id); })
+  );
+
+  const overridesByKey = new Map();
+  const newItems = [];
+  items.forEach((item) => {
+    const key = item.translationKey || translationIdByTitle.get(item.title) || translationIdByTitle.get(item.en?.title);
+    if (key) {
+      overridesByKey.set(key, item);
+    } else if (!allTranslatedTitles.has(item.title) && !allTranslatedTitles.has(item.en?.title)) {
+      newItems.push(item);
+    }
+  });
+
+  // Merge: start with translation defaults, apply admin overrides
+  const mergedRoles = t.experience.roles.map((role) => {
+    const override = overridesByKey.get(role.id);
+    if (override) {
+      const d = override[lang] || override.en || {};
+      return {
+        title: d.title || role.title,
+        company: d.company || role.company,
+        period: override.period || role.period,
+        description: d.description || role.description,
+      };
+    }
+    return role;
+  });
+
+  // Append new admin-only items (resolve language with fallback)
+  const extras = newItems.map((item) => {
+    const d = item[lang] || item.en || {};
+    return {
+      title: d.title || item.title || "",
+      company: d.company || item.company || "",
+      period: item.period || "",
+      description: d.description || item.description || "",
+    };
+  });
+
+  const allRoles = [...mergedRoles, ...extras];
 
   return (
     <section id="experience" className="py-24 px-6 bg-glass-section backdrop-blur-sm">
