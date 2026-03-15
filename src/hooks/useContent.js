@@ -13,23 +13,21 @@ import {
 
 /**
  * Merge localStorage items with DB items.
- * localStorage items win when they share the same id or title (they may have
- * multilingual fields that the DB rows don't). DB-only items are appended.
+ * localStorage items win when they share the same id or title.
+ * DB-only items are appended.
  */
-function mergeDbAndLocal(localItems, dbItems = []) {
+function mergeLocalAndDb(localItems, dbItems = []) {
   if (!dbItems || dbItems.length === 0) return localItems;
   const localById = new Map();
   const localByTitle = new Map();
   localItems.forEach((item) => {
     if (item.id != null) localById.set(Number(item.id), item);
-    const title = item.en?.title || item.title;
-    if (title) localByTitle.set(title, item);
+    if (item.title) localByTitle.set(item.title, item);
   });
   const extras = [];
   dbItems.forEach((db) => {
     const id = db.id != null ? Number(db.id) : null;
-    const title = db.en?.title || db.title;
-    if ((id != null && localById.has(id)) || (title && localByTitle.has(title))) return;
+    if ((id != null && localById.has(id)) || (db.title && localByTitle.has(db.title))) return;
     extras.push(db);
   });
   return [...localItems, ...extras];
@@ -41,7 +39,7 @@ export function useExperiencesContent() {
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    const onStorage = () => setItems(mergeDbAndLocal(getExtraExperiences()));
+    const onStorage = () => setItems(getExtraExperiences());
     window.addEventListener("storage", onStorage);
 
     if (!usingDb) {
@@ -52,7 +50,7 @@ export function useExperiencesContent() {
       .then((data) => {
         if (data && data.length > 0) {
           const local = getExtraExperiences();
-          setItems(local.length > 0 ? mergeDbAndLocal(local, data) : data);
+          setItems(local.length > 0 ? mergeLocalAndDb(local, data) : data);
         }
         setHasFetched(true);
       })
@@ -71,7 +69,7 @@ export function useProjectsContent() {
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    const onStorage = () => setItems(mergeDbAndLocal(getExtraProjects()));
+    const onStorage = () => setItems(getExtraProjects());
     window.addEventListener("storage", onStorage);
 
     if (!usingDb) {
@@ -82,7 +80,7 @@ export function useProjectsContent() {
       .then((data) => {
         if (data && data.length > 0) {
           const local = getExtraProjects();
-          setItems(local.length > 0 ? mergeDbAndLocal(local, data) : data);
+          setItems(local.length > 0 ? mergeLocalAndDb(local, data) : data);
         }
         setHasFetched(true);
       })
@@ -112,7 +110,7 @@ export function usePhotosContent() {
       .then((data) => {
         if (data && data.length > 0) {
           const local = getExtraPhotos();
-          setItems(local.length > 0 ? mergeDbAndLocal(local, data) : data);
+          setItems(local.length > 0 ? mergeLocalAndDb(local, data) : data);
         }
         setHasFetched(true);
       })

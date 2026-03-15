@@ -1,59 +1,10 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useExperiencesContent } from "../hooks/useContent";
-import translations from "../data/translations";
 
 export default function Experience() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { items } = useExperiencesContent();
-
-  // Build override map: admin items keyed by translationKey or title match
-  const allTranslatedTitles = new Set(
-    Object.values(translations).flatMap((tr) => tr.experience.roles.map((r) => r.title))
-  );
-  const translationIdByTitle = new Map();
-  Object.values(translations).forEach((tr) =>
-    tr.experience.roles.forEach((r) => { if (r.id) translationIdByTitle.set(r.title, r.id); })
-  );
-
-  const overridesByKey = new Map();
-  const newItems = [];
-  items.forEach((item) => {
-    const key = item.translationKey || translationIdByTitle.get(item.title) || translationIdByTitle.get(item.en?.title);
-    if (key) {
-      overridesByKey.set(key, item);
-    } else if (!allTranslatedTitles.has(item.title) && !allTranslatedTitles.has(item.en?.title)) {
-      newItems.push(item);
-    }
-  });
-
-  // Merge: start with translation defaults, apply admin overrides
-  const mergedRoles = t.experience.roles.map((role) => {
-    const override = overridesByKey.get(role.id);
-    if (override) {
-      const d = override[lang] || override.en || {};
-      return {
-        title: d.title || role.title,
-        company: d.company || role.company,
-        period: override.period || role.period,
-        description: d.description || role.description,
-      };
-    }
-    return role;
-  });
-
-  // Append new admin-only items (resolve language with fallback)
-  const extras = newItems.map((item) => {
-    const d = item[lang] || item.en || {};
-    return {
-      title: d.title || item.title || "",
-      company: d.company || item.company || "",
-      period: item.period || "",
-      description: d.description || item.description || "",
-    };
-  });
-
-  const allRoles = [...mergedRoles, ...extras];
 
   return (
     <section id="experience" className="py-24 px-6 bg-glass-section backdrop-blur-sm">
@@ -76,9 +27,9 @@ export default function Experience() {
         />
 
         <div className="space-y-8">
-          {allRoles.map((exp, i) => (
+          {items.map((exp, i) => (
             <motion.div
-              key={`exp-${exp.title}`}
+              key={`exp-${exp.title}-${exp.id || i}`}
               className="relative pl-8 border-l-2 border-border"
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
