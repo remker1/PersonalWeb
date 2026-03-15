@@ -1,17 +1,17 @@
 import { motion } from "motion/react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import { featuredPhotos } from "../data/photos";
 import { usePhotosContent } from "../hooks/useContent";
 
 export default function Photography() {
   const { t } = useLanguage();
-  const { items, usingDb, hasServerData } = usePhotosContent();
-  const allPhotos = hasServerData || usingDb
-    ? items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" }))
-    : [
-        ...featuredPhotos,
-        ...items.map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" })),
-      ];
+  const { items } = usePhotosContent();
+  const localIds = new Set(featuredPhotos.map((p) => p.id));
+  const extras = items
+    .filter((p) => !localIds.has(p.id))
+    .map((p) => ({ id: p.id, src: p.url, alt: p.alt || "Photo" }));
+  const allPhotos = [...featuredPhotos, ...extras];
 
   return (
     <section id="photography" className="py-24 px-6 bg-glass-section backdrop-blur-sm">
@@ -45,7 +45,7 @@ export default function Photography() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {allPhotos.slice(0, 8).map((photo, i) => (
             <motion.div
-              key={photo.id}
+              key={`photo-${photo.id}`}
               className="aspect-square bg-glass-surface backdrop-blur-md border border-border rounded-lg overflow-hidden group"
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -70,8 +70,8 @@ export default function Photography() {
           transition={{ duration: 0.5, delay: 0.4 }}
           viewport={{ once: true }}
         >
-          <a
-            href="/photography"
+          <Link
+            to="/photography"
             className="inline-flex items-center gap-2 px-6 py-3 border border-border hover:border-text-muted text-text-secondary hover:text-text-primary text-sm font-medium rounded-lg transition-colors"
           >
             {t.photography.viewGallery}
@@ -88,7 +88,7 @@ export default function Photography() {
                 d="M17 8l4 4m0 0l-4 4m4-4H3"
               />
             </svg>
-          </a>
+          </Link>
         </motion.div>
       </div>
     </section>
