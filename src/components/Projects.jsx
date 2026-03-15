@@ -5,7 +5,6 @@ import translations from "../data/translations";
 
 const projectLinks = [
   { github: "https://git.cs.usask.ca/xpo285/cmpt370-g29", live: "#" },
-  { github: "#", live: "#" },
   { github: "https://github.com/remker1/USask-GPA-Calculator", live: "#" },
 ];
 

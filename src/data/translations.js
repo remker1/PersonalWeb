@@ -54,12 +54,6 @@ const translations = {
           tags: ["Java", "JavaFX", "Flask", "MongoDB", "Docker"],
         },
         {
-          title: "Project Two",
-          description:
-            "A brief description of this project. Replace with your actual project details, what problem it solves, and your role.",
-          tags: ["Python", "Flask", "PostgreSQL"],
-        },
-        {
           title: "USask GPA Estimator",
           description:
             "An unofficial GPA calculator that parses USask unofficial transcript PDFs and gives a quick academic standing estimate. It supports editing grades, adding future courses for simulation, and handling retaken courses by using the newest grade.",
@@ -146,11 +140,6 @@ const translations = {
           tags: ["Java", "JavaFX", "Flask", "MongoDB", "Docker"],
         },
         {
-          title: "项目二",
-          description: "项目简要描述。请替换为您的实际项目详情、解决的问题以及您的角色。",
-          tags: ["Python", "Flask", "PostgreSQL"],
-        },
-        {
           title: "USask GPA Estimator",
           description:
             "一个非官方 GPA 计算工具：解析萨大非官方成绩单 PDF，快速估算当前学业成绩。支持修改成绩、添加未来课程做模拟，并在重修场景下使用最新成绩进行计算。",
@@ -232,12 +221,6 @@ const translations = {
           description:
             "Projet scolaire CMPT 370 : une plateforme de gestion de rénovation pour petites entreprises. Elle couvre la planification des projets, le suivi des stocks et des affectations d'employés, ainsi que les demandes clients et les avis, avec une app JavaFX et un backend Flask + MongoDB.",
           tags: ["Java", "JavaFX", "Flask", "MongoDB", "Docker"],
-        },
-        {
-          title: "Projet Deux",
-          description:
-            "Brève description du projet. Remplacez par les détails réels de votre projet, le problème résolu et votre rôle.",
-          tags: ["Python", "Flask", "PostgreSQL"],
         },
         {
           title: "USask GPA Estimator",
