@@ -14,6 +14,6 @@ const allPhotos = Object.entries(photoModules)
     };
   });
 
-export const featuredPhotos = allPhotos.slice(0, 4);
+export const featuredPhotos = allPhotos.slice(0, 8);
 
 export const galleryPhotos = allPhotos;
