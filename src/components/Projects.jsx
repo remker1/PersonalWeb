@@ -1,61 +1,10 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useProjectsContent } from "../hooks/useContent";
-import translations from "../data/translations";
 
 export default function Projects() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const { items } = useProjectsContent();
-
-  // Build override map: admin items keyed by translationKey or title match
-  const allTranslatedTitles = new Set(
-    Object.values(translations).flatMap((tr) => tr.projects.items.map((p) => p.title))
-  );
-  const translationIdByTitle = new Map();
-  Object.values(translations).forEach((tr) =>
-    tr.projects.items.forEach((p) => { if (p.id) translationIdByTitle.set(p.title, p.id); })
-  );
-
-  const overridesByKey = new Map();
-  const newItems = [];
-  items.forEach((item) => {
-    const key = item.translationKey || translationIdByTitle.get(item.title) || translationIdByTitle.get(item.en?.title);
-    if (key) {
-      overridesByKey.set(key, item);
-    } else if (!allTranslatedTitles.has(item.title) && !allTranslatedTitles.has(item.en?.title)) {
-      newItems.push(item);
-    }
-  });
-
-  // Merge: start with translation defaults, apply admin overrides
-  const mergedItems = t.projects.items.map((proj) => {
-    const override = overridesByKey.get(proj.id);
-    if (override) {
-      const d = override[lang] || override.en || {};
-      return {
-        title: d.title || proj.title,
-        description: d.description || proj.description,
-        tags: override.tags || proj.tags,
-        github: override.github || proj.github,
-        live: override.live || proj.live,
-      };
-    }
-    return proj;
-  });
-
-  // Append new admin-only items (resolve language with fallback)
-  const extras = newItems.map((item) => {
-    const d = item[lang] || item.en || {};
-    return {
-      title: d.title || item.title || "",
-      description: d.description || item.description || "",
-      tags: item.tags || [],
-      github: item.github || "#",
-      live: item.live || "#",
-    };
-  });
-
-  const allItems = [...mergedItems, ...extras];
 
   return (
     <section id="projects" className="py-24 px-6">
@@ -78,9 +27,9 @@ export default function Projects() {
         />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allItems.map((project, i) => (
+          {items.map((project, i) => (
             <motion.div
-              key={`proj-${project.title}`}
+              key={`proj-${project.title}-${project.id || i}`}
               className="bg-glass-surface backdrop-blur-md border border-border rounded-lg p-6 group"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -146,7 +95,7 @@ export default function Projects() {
                 {project.description}
               </p>
               <div className="flex flex-wrap gap-2">
-                {project.tags.map((tag) => (
+                {(project.tags || []).map((tag) => (
                   <span
                     key={tag}
                     className="text-xs text-text-muted font-mono"
