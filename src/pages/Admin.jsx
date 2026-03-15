@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import AnimatedBackground, { SEASON_STORAGE_KEY, getSeason } from "../components/AnimatedBackground";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   getExtraExperiences, saveExtraExperiences,
   getExtraProjects, saveExtraProjects,
@@ -273,7 +274,7 @@ function AdminPanel() {
     { key: "projects", label: "Projects" },
     { key: "photos", label: "Photos" },
     { key: "messages", label: "Messages" },
-    { key: "season", label: "Season" },
+    { key: "adjustments", label: "Adjustments" },
   ];
 
   const inputClass =
@@ -612,9 +613,9 @@ function AdminPanel() {
           </motion.div>
         )}
 
-        {/* Season Tab */}
-        {tab === "season" && (
-          <SeasonPanel />
+        {/* Adjustments Tab */}
+        {tab === "adjustments" && (
+          <AdjustmentsPanel />
         )}
       </main>
     </div>
@@ -668,14 +669,11 @@ function SeasonPanel() {
   })();
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-text-primary mb-1">Background Season Theme</h3>
-        <p className="text-xs text-text-muted">
-          Choose which seasonal background to display. Auto mode uses the current date
-          (currently <span className="text-text-secondary font-medium capitalize">{currentAuto}</span>).
-        </p>
-      </div>
+    <div className="space-y-4">
+      <p className="text-xs text-text-muted">
+        Auto mode uses the current date
+        (currently <span className="text-text-secondary font-medium capitalize">{currentAuto}</span>).
+      </p>
 
       <div className="space-y-2">
         {SEASON_OPTIONS.map((opt) => {
@@ -725,11 +723,94 @@ function SeasonPanel() {
         })}
       </div>
 
-      <div className="mt-6 pt-4 border-t border-border">
+      <div className="mt-4 pt-3 border-t border-border">
         <p className="text-xs text-text-muted">
           Active season: <span className="text-text-secondary font-medium capitalize">{active === "auto" ? `Auto (${currentAuto})` : active}</span>
         </p>
       </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Day / Night Mode Panel – auto (time-based), light, dark
+   ═══════════════════════════════════════════════════════════════════ */
+const DAY_OPTIONS = [
+  { key: "auto", label: "Auto", icon: "🔄", description: "Switches based on time of day (6 AM – 6 PM)" },
+  { key: "light", label: "Light", icon: "☀️", description: "Always use light mode" },
+  { key: "dark", label: "Dark", icon: "🌙", description: "Always use dark mode" },
+];
+
+function DayPanel() {
+  const { dayMode, setDayMode } = useTheme();
+
+  return (
+    <div className="space-y-2">
+      {DAY_OPTIONS.map((opt) => {
+        const isActive = dayMode === opt.key;
+        return (
+          <button
+            key={opt.key}
+            onClick={() => setDayMode(opt.key)}
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg border transition-all duration-200 text-left ${
+              isActive
+                ? "bg-accent/10 border-accent"
+                : "bg-glass-surface backdrop-blur-md border-border hover:border-text-muted"
+            }`}
+          >
+            <div
+              className={`relative w-10 h-[22px] rounded-full shrink-0 transition-colors duration-200 ${
+                isActive ? "bg-accent" : "bg-border"
+              }`}
+            >
+              <div
+                className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                  isActive ? "translate-x-[21px]" : "translate-x-[3px]"
+                }`}
+              />
+            </div>
+            <span className="text-xl leading-none" aria-hidden="true">{opt.icon}</span>
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${isActive ? "text-accent" : "text-text-primary"}`}>
+                {opt.label}
+              </p>
+              <p className="text-xs text-text-muted truncate">{opt.description}</p>
+            </div>
+            {isActive && (
+              <svg className="w-5 h-5 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Adjustments Panel – wraps Season + Day sections
+   ═══════════════════════════════════════════════════════════════════ */
+function AdjustmentsPanel() {
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
+      {/* Seasons Section */}
+      <section>
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-text-primary mb-1">Seasons</h3>
+          <p className="text-xs text-text-muted">Choose which seasonal background to display.</p>
+        </div>
+        <SeasonPanel />
+      </section>
+
+      {/* Day Section */}
+      <section>
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-text-primary mb-1">Day / Night</h3>
+          <p className="text-xs text-text-muted">Control the light and dark mode appearance.</p>
+        </div>
+        <DayPanel />
+      </section>
     </motion.div>
   );
 }
