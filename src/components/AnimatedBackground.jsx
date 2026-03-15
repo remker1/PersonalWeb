@@ -36,17 +36,14 @@ const MOUNTAIN_PATHS = [
   {
     d: "M0,320 Q40,260 100,290 Q160,210 240,250 Q320,160 420,210 Q500,130 600,180 Q680,100 780,160 Q860,80 960,140 Q1040,60 1140,120 Q1220,50 1320,100 Q1380,70 1440,90 L1440,400 L0,400 Z",
     height: "40vh",
-    parallax: 0.06,
   },
   {
     d: "M0,310 Q70,260 150,280 Q230,200 330,240 Q420,160 520,210 Q600,140 700,185 Q780,110 880,165 Q960,95 1060,150 Q1140,85 1240,135 Q1320,90 1400,120 L1440,110 L1440,400 L0,400 Z",
     height: "32vh",
-    parallax: 0.14,
   },
   {
     d: "M0,300 Q90,250 180,275 Q280,210 380,250 Q460,190 560,230 Q640,175 740,215 Q830,155 930,200 Q1020,145 1120,190 Q1200,140 1300,175 Q1380,150 1440,170 L1440,400 L0,400 Z",
     height: "25vh",
-    parallax: 0.24,
   },
 ];
 
@@ -702,8 +699,6 @@ function drawWinter(ctx, w, h, t, dark, particles, seasonCfg, frame, stars, mete
    ═══════════════════════════════════════════════════════════════════ */
 export default function AnimatedBackground() {
   const canvasRef = useRef(null);
-  const mtRefs = useRef([]);
-  const scrollRef = useRef(0);
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const themeRef = useRef(isDark);
@@ -715,29 +710,6 @@ export default function AnimatedBackground() {
   seasonRef.current = season;
   const cfgRef = useRef(seasonCfg);
   cfgRef.current = seasonCfg;
-
-  /* ── scroll listener ── */
-  useEffect(() => {
-    const h = () => { scrollRef.current = window.scrollY; };
-    window.addEventListener("scroll", h, { passive: true });
-    h();
-    return () => window.removeEventListener("scroll", h);
-  }, []);
-
-  /* ── mountain parallax loop ── */
-  useEffect(() => {
-    let raf;
-    const tick = () => {
-      const sy = scrollRef.current;
-      mtRefs.current.forEach((el, i) => {
-        if (!el) return;
-        el.style.transform = `translateY(${-sy * MOUNTAIN_PATHS[i].parallax}px)`;
-      });
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
 
   /* ── canvas animation ── */
   useEffect(() => {
@@ -835,8 +807,7 @@ export default function AnimatedBackground() {
       {MOUNTAIN_PATHS.map((mt, i) => (
         <svg
           key={`mt-${i}`}
-          ref={(el) => (mtRefs.current[i] = el)}
-          className="absolute bottom-0 left-0 w-full will-change-transform"
+          className="absolute bottom-0 left-0 w-full"
           style={{ height: mt.height }}
           viewBox="0 0 1440 400"
           preserveAspectRatio="none"
