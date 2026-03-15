@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useProjectsContent } from "../hooks/useContent";
+import translations from "../data/translations";
 
 const projectLinks = [
   { github: "https://git.cs.usask.ca/xpo285/cmpt370-g29", live: "#" },
@@ -10,14 +11,17 @@ const projectLinks = [
 
 export default function Projects() {
   const { t } = useLanguage();
-  const { items, usingDb, hasServerData } = useProjectsContent();
-  const allItems =
-    hasServerData || usingDb
-      ? items
-      : [
-          ...t.projects.items.map((p, i) => ({ ...p, github: projectLinks[i]?.github, live: projectLinks[i]?.live })),
-          ...items,
-        ];
+  const { items } = useProjectsContent();
+  // Always show translated projects first; append only DB items whose titles
+  // don't already exist in the translations (dedup against all languages).
+  const translatedTitles = new Set(
+    Object.values(translations).flatMap((tr) => tr.projects.items.map((p) => p.title))
+  );
+  const extras = items.filter((p) => !translatedTitles.has(p.title));
+  const allItems = [
+    ...t.projects.items.map((p, i) => ({ ...p, github: projectLinks[i]?.github, live: projectLinks[i]?.live })),
+    ...extras,
+  ];
 
   return (
     <section id="projects" className="py-24 px-6">
@@ -42,7 +46,7 @@ export default function Projects() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {allItems.map((project, i) => (
             <motion.div
-              key={project.id || i}
+              key={`proj-${project.title}`}
               className="bg-glass-surface backdrop-blur-md border border-border rounded-lg p-6 group"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}

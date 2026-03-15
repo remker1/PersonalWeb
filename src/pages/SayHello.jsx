@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { submitMessage } from "../api";
@@ -42,21 +43,21 @@ export default function SayHello() {
         {/* Header */}
         <nav className="px-6 py-4">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <a
-              href="/"
+            <Link
+              to="/"
               className="text-lg font-semibold text-text-primary hover:text-accent transition-colors"
             >
               remker1
-            </a>
-            <a
-              href="/"
+            </Link>
+            <Link
+              to="/"
               className="text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Back
-            </a>
+            </Link>
           </div>
         </nav>
 

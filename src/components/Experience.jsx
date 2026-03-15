@@ -1,16 +1,20 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useExperiencesContent } from "../hooks/useContent";
+import translations from "../data/translations";
 
 export default function Experience() {
   const { t } = useLanguage();
-  const { items, usingDb, hasServerData } = useExperiencesContent();
-  const allRoles = (hasServerData || usingDb)
-    ? items.map((e) => ({ title: e.title, company: e.company, period: e.period, description: e.description }))
-    : [
-        ...t.experience.roles,
-        ...items.map((e) => ({ title: e.title, company: e.company, period: e.period, description: e.description })),
-      ];
+  const { items } = useExperiencesContent();
+  // Always show translated roles first; append only DB items whose titles
+  // don't already exist in the translations (dedup against all languages).
+  const translatedTitles = new Set(
+    Object.values(translations).flatMap((tr) => tr.experience.roles.map((r) => r.title))
+  );
+  const extras = items
+    .filter((e) => !translatedTitles.has(e.title))
+    .map((e) => ({ title: e.title, company: e.company, period: e.period, description: e.description }));
+  const allRoles = [...t.experience.roles, ...extras];
 
   return (
     <section id="experience" className="py-24 px-6 bg-glass-section backdrop-blur-sm">
@@ -35,7 +39,7 @@ export default function Experience() {
         <div className="space-y-8">
           {allRoles.map((exp, i) => (
             <motion.div
-              key={i}
+              key={`exp-${exp.title}`}
               className="relative pl-8 border-l-2 border-border"
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}

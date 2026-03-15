@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import AnimatedBackground from "../components/AnimatedBackground";
+import AnimatedBackground, { SEASON_STORAGE_KEY, getSeason } from "../components/AnimatedBackground";
 import {
   getExtraExperiences, saveExtraExperiences,
   getExtraProjects, saveExtraProjects,
@@ -273,6 +273,7 @@ function AdminPanel() {
     { key: "projects", label: "Projects" },
     { key: "photos", label: "Photos" },
     { key: "messages", label: "Messages" },
+    { key: "season", label: "Season" },
   ];
 
   const inputClass =
@@ -610,8 +611,126 @@ function AdminPanel() {
             )}
           </motion.div>
         )}
+
+        {/* Season Tab */}
+        {tab === "season" && (
+          <SeasonPanel />
+        )}
       </main>
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Season Override Panel – 5 exclusive toggle switches
+   ═══════════════════════════════════════════════════════════════════ */
+const SEASON_OPTIONS = [
+  { key: "auto", label: "Auto", icon: "🔄", description: "Changes based on current date" },
+  { key: "spring", label: "Spring", icon: "🌸", description: "Cherry blossoms & butterflies" },
+  { key: "summer", label: "Summer", icon: "☀️", description: "Fireflies & warm nights" },
+  { key: "autumn", label: "Autumn", icon: "🍂", description: "Falling leaves & golden skies" },
+  { key: "winter", label: "Winter", icon: "❄️", description: "Snowfall & northern lights" },
+];
+
+function SeasonPanel() {
+  /* Read current state: if nothing in localStorage → "auto" */
+  const [active, setActive] = useState(() => {
+    try {
+      const v = localStorage.getItem(SEASON_STORAGE_KEY);
+      return v && ["spring", "summer", "autumn", "winter"].includes(v) ? v : "auto";
+    } catch {
+      return "auto";
+    }
+  });
+
+  const select = useCallback((key) => {
+    setActive(key);
+    try {
+      if (key === "auto") {
+        localStorage.removeItem(SEASON_STORAGE_KEY);
+      } else {
+        localStorage.setItem(SEASON_STORAGE_KEY, key);
+      }
+    } catch {}
+    /* Force page reload so AnimatedBackground re-initialises with new season */
+    window.location.reload();
+  }, []);
+
+  const currentAuto = (() => {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    const md = m * 100 + d;
+    if (md >= 320 && md <= 620) return "spring";
+    if (md >= 621 && md <= 922) return "summer";
+    if (md >= 923 && md <= 1220) return "autumn";
+    return "winter";
+  })();
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-text-primary mb-1">Background Season Theme</h3>
+        <p className="text-xs text-text-muted">
+          Choose which seasonal background to display. Auto mode uses the current date
+          (currently <span className="text-text-secondary font-medium capitalize">{currentAuto}</span>).
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {SEASON_OPTIONS.map((opt) => {
+          const isActive = active === opt.key;
+          return (
+            <button
+              key={opt.key}
+              onClick={() => select(opt.key)}
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg border transition-all duration-200 text-left ${
+                isActive
+                  ? "bg-accent/10 border-accent"
+                  : "bg-glass-surface backdrop-blur-md border-border hover:border-text-muted"
+              }`}
+            >
+              {/* Toggle switch */}
+              <div
+                className={`relative w-10 h-[22px] rounded-full shrink-0 transition-colors duration-200 ${
+                  isActive ? "bg-accent" : "bg-border"
+                }`}
+              >
+                <div
+                  className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                    isActive ? "translate-x-[21px]" : "translate-x-[3px]"
+                  }`}
+                />
+              </div>
+
+              {/* Icon */}
+              <span className="text-xl leading-none" aria-hidden="true">{opt.icon}</span>
+
+              {/* Label & description */}
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${isActive ? "text-accent" : "text-text-primary"}`}>
+                  {opt.label}
+                </p>
+                <p className="text-xs text-text-muted truncate">{opt.description}</p>
+              </div>
+
+              {/* Active indicator */}
+              {isActive && (
+                <svg className="w-5 h-5 text-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 pt-4 border-t border-border">
+        <p className="text-xs text-text-muted">
+          Active season: <span className="text-text-secondary font-medium capitalize">{active === "auto" ? `Auto (${currentAuto})` : active}</span>
+        </p>
+      </div>
+    </motion.div>
   );
 }
 
