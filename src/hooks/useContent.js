@@ -17,12 +17,20 @@ export function useExperiencesContent() {
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
+    if (!usingDb) {
+      // No backend — localStorage is the source of truth; listen for changes
+      const onStorage = () => setItems(getExtraExperiences());
+      window.addEventListener("storage", onStorage);
+      setHasFetched(true);
+      return () => window.removeEventListener("storage", onStorage);
+    }
     getExperiences()
       .then((data) => {
         setItems(data);
         setHasFetched(true);
       })
       .catch(() => setHasFetched(true));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasServerData = hasFetched && items.length > 0;
@@ -35,12 +43,19 @@ export function useProjectsContent() {
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
+    if (!usingDb) {
+      const onStorage = () => setItems(getExtraProjects());
+      window.addEventListener("storage", onStorage);
+      setHasFetched(true);
+      return () => window.removeEventListener("storage", onStorage);
+    }
     getProjects()
       .then((data) => {
         setItems(data);
         setHasFetched(true);
       })
       .catch(() => setHasFetched(true));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasServerData = hasFetched && items.length > 0;
@@ -53,12 +68,19 @@ export function usePhotosContent() {
   const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
+    if (!usingDb) {
+      const onStorage = () => setItems(getExtraPhotos());
+      window.addEventListener("storage", onStorage);
+      setHasFetched(true);
+      return () => window.removeEventListener("storage", onStorage);
+    }
     getPhotos()
       .then((data) => {
         setItems(data);
         setHasFetched(true);
       })
       .catch(() => setHasFetched(true));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasServerData = hasFetched && items.length > 0;
