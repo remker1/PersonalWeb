@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export default function Contact() {
@@ -33,18 +34,22 @@ export default function Contact() {
           {t.contact.description}
         </motion.p>
 
-        <motion.a
-          href="/contact"
-          className="inline-block px-8 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors mb-12"
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
           viewport={{ once: true }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          className="inline-block mb-12"
         >
-          {t.contact.cta}
-        </motion.a>
+          <Link
+            to="/contact"
+            className="inline-block px-8 py-3 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {t.contact.cta}
+          </Link>
+        </motion.div>
 
         <motion.div
           className="flex items-center justify-center gap-6"
