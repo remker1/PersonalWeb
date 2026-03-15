@@ -123,13 +123,8 @@ function AdminPanel() {
     return () => { mounted = false; };
   }, []);
 
-  // Language tabs for multilingual editing
-  const [formLang, setFormLang] = useState("en");
-  const LANGS = [{ key: "en", label: "EN" }, { key: "zh", label: "中文" }, { key: "fr", label: "FR" }];
-
   // Experience form
-  const emptyLangExp = { title: "", company: "", description: "" };
-  const [expForm, setExpForm] = useState({ en: { ...emptyLangExp }, zh: { ...emptyLangExp }, fr: { ...emptyLangExp }, startDate: "", endDate: "", isPresent: false, translationKey: null });
+  const [expForm, setExpForm] = useState({ title: "", company: "", description: "", startDate: "", endDate: "", isPresent: false });
   const [editingExpId, setEditingExpId] = useState(null);
 
   const formatPeriod = (startDate, endDate, isPresent) => {
@@ -161,28 +156,20 @@ function AdminPanel() {
     return { startDate: parse(parts[0]), endDate: isPresent ? "" : parse(parts[1]), isPresent };
   };
   // Project form
-  const emptyLangProj = { title: "", description: "" };
-  const [projForm, setProjForm] = useState({ en: { ...emptyLangProj }, zh: { ...emptyLangProj }, fr: { ...emptyLangProj }, tags: "", github: "", live: "", translationKey: null });
+  const [projForm, setProjForm] = useState({ title: "", description: "", tags: "", github: "", live: "" });
   const [editingProjId, setEditingProjId] = useState(null);
   // Photo form
   const [photoForm, setPhotoForm] = useState({ url: "", alt: "" });
   const [isDragOver, setIsDragOver] = useState(false);
   const [photoError, setPhotoError] = useState("");
 
-  const resetExpForm = () => ({ en: { ...emptyLangExp }, zh: { ...emptyLangExp }, fr: { ...emptyLangExp }, startDate: "", endDate: "", isPresent: false, translationKey: null });
-  const resetProjForm = () => ({ en: { ...emptyLangProj }, zh: { ...emptyLangProj }, fr: { ...emptyLangProj }, tags: "", github: "", live: "", translationKey: null });
-
-  const setExpLang = (field, value) => {
-    setExpForm((prev) => ({ ...prev, [formLang]: { ...prev[formLang], [field]: value } }));
-  };
-  const setProjLang = (field, value) => {
-    setProjForm((prev) => ({ ...prev, [formLang]: { ...prev[formLang], [field]: value } }));
-  };
+  const resetExpForm = () => ({ title: "", company: "", description: "", startDate: "", endDate: "", isPresent: false });
+  const resetProjForm = () => ({ title: "", description: "", tags: "", github: "", live: "" });
 
   const addExperience = async (e) => {
     e.preventDefault();
     const period = formatPeriod(expForm.startDate, expForm.endDate, expForm.isPresent);
-    const saveData = { en: expForm.en, zh: expForm.zh, fr: expForm.fr, period, translationKey: expForm.translationKey || null };
+    const saveData = { title: expForm.title, company: expForm.company, description: expForm.description, period };
     if (editingExpId) {
       const updated = experiences.map((x) =>
         x.id === editingExpId ? { ...x, ...saveData } : x
@@ -217,13 +204,12 @@ function AdminPanel() {
   const startEditExperience = (exp) => {
     setEditingExpId(exp.id);
     const { startDate, endDate, isPresent } = parsePeriodToForm(exp.period);
-    // Support both old flat format and new multilingual format
-    const langData = (lang) => ({
-      title: exp[lang]?.title || exp.title || "",
-      company: exp[lang]?.company || exp.company || "",
-      description: exp[lang]?.description || exp.description || "",
+    setExpForm({
+      title: exp.en?.title || exp.title || "",
+      company: exp.en?.company || exp.company || "",
+      description: exp.en?.description || exp.description || "",
+      startDate, endDate, isPresent,
     });
-    setExpForm({ en: langData("en"), zh: langData("zh"), fr: langData("fr"), startDate, endDate, isPresent, translationKey: exp.translationKey || null });
   };
 
   const cancelEditExperience = () => {
@@ -249,7 +235,7 @@ function AdminPanel() {
   const addProject = async (e) => {
     e.preventDefault();
     const tags = projForm.tags.split(",").map((t) => t.trim()).filter(Boolean);
-    const saveData = { en: projForm.en, zh: projForm.zh, fr: projForm.fr, tags, github: projForm.github, live: projForm.live, translationKey: projForm.translationKey || null };
+    const saveData = { title: projForm.title, description: projForm.description, tags, github: projForm.github, live: projForm.live };
     if (editingProjId) {
       const updated = projects.map((x) =>
         x.id === editingProjId ? { ...x, ...saveData } : x
@@ -283,16 +269,12 @@ function AdminPanel() {
 
   const startEditProject = (proj) => {
     setEditingProjId(proj.id);
-    const langData = (lang) => ({
-      title: proj[lang]?.title || proj.title || "",
-      description: proj[lang]?.description || proj.description || "",
-    });
     setProjForm({
-      en: langData("en"), zh: langData("zh"), fr: langData("fr"),
+      title: proj.en?.title || proj.title || "",
+      description: proj.en?.description || proj.description || "",
       tags: Array.isArray(proj.tags) ? proj.tags.join(", ") : (proj.tags || ""),
       github: proj.github || "",
       live: proj.live || "",
-      translationKey: proj.translationKey || null,
     });
   };
 
@@ -437,18 +419,9 @@ function AdminPanel() {
         {tab === "experience" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <form onSubmit={addExperience} className="space-y-3 mb-8">
-              {/* Language tabs */}
-              <div className="flex gap-1 bg-glass-surface border border-border rounded-lg p-0.5">
-                {LANGS.map((l) => (
-                  <button key={l.key} type="button" onClick={() => setFormLang(l.key)}
-                    className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${formLang === l.key ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"}`}>
-                    {l.label}
-                  </button>
-                ))}
-              </div>
               <div className="grid grid-cols-2 gap-3">
-                <input className={inputClass} placeholder="Job title" required value={expForm[formLang].title} onChange={(e) => setExpLang("title", e.target.value)} />
-                <input className={inputClass} placeholder="Company" required value={expForm[formLang].company} onChange={(e) => setExpLang("company", e.target.value)} />
+                <input className={inputClass} placeholder="Job title" required value={expForm.title} onChange={(e) => setExpForm({ ...expForm, title: e.target.value })} />
+                <input className={inputClass} placeholder="Company" required value={expForm.company} onChange={(e) => setExpForm({ ...expForm, company: e.target.value })} />
               </div>
               <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
                 <div>
@@ -471,7 +444,7 @@ function AdminPanel() {
                   Present
                 </button>
               </div>
-              <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Description" required value={expForm[formLang].description} onChange={(e) => setExpLang("description", e.target.value)} />
+              <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Description" required value={expForm.description} onChange={(e) => setExpForm({ ...expForm, description: e.target.value })} />
               <div className="flex gap-2">
                 <button type="submit" className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
                   {editingExpId ? "Save Changes" : "Add Experience"}
@@ -484,16 +457,16 @@ function AdminPanel() {
               </div>
             </form>
             <div className="mb-8">
-              <p className="text-xs uppercase tracking-wide text-text-muted mb-2">Live Preview ({LANGS.find((l) => l.key === formLang)?.label})</p>
+              <p className="text-xs uppercase tracking-wide text-text-muted mb-2">Live Preview</p>
               <div className="bg-glass-surface backdrop-blur-md border border-border rounded-lg p-4">
                 <p className="text-text-primary font-medium text-sm">
-                  {expForm[formLang].title || "Job title"}
+                  {expForm.title || "Job title"}
                 </p>
                 <p className="text-accent text-xs">
-                  {(expForm[formLang].company || "Company") + " · " + (formatPeriod(expForm.startDate, expForm.endDate, expForm.isPresent) || "Period")}
+                  {(expForm.company || "Company") + " · " + (formatPeriod(expForm.startDate, expForm.endDate, expForm.isPresent) || "Period")}
                 </p>
                 <p className="text-text-secondary text-xs mt-1 line-clamp-2">
-                  {expForm[formLang].description || "Description preview..."}
+                  {expForm.description || "Description preview..."}
                 </p>
               </div>
             </div>
@@ -520,14 +493,12 @@ function AdminPanel() {
               <p className="text-text-muted text-sm text-center py-8">No extra experiences added yet.</p>
             )}
             <div className="space-y-3">
-              {experiences.map((exp) => {
-                const d = exp.en || exp;
-                return (
+              {experiences.map((exp) => (
                 <div key={exp.id} className={`bg-glass-surface backdrop-blur-md border rounded-lg p-4 flex items-start justify-between gap-4 ${editingExpId === exp.id ? "border-accent" : "border-border"}`}>
                   <div>
-                    <p className="text-text-primary font-medium text-sm">{d.title || exp.title}</p>
-                    <p className="text-accent text-xs">{d.company || exp.company} &middot; {exp.period}</p>
-                    <p className="text-text-secondary text-xs mt-1 line-clamp-2">{d.description || exp.description}</p>
+                    <p className="text-text-primary font-medium text-sm">{exp.title}</p>
+                    <p className="text-accent text-xs">{exp.company} &middot; {exp.period}</p>
+                    <p className="text-text-secondary text-xs mt-1 line-clamp-2">{exp.description}</p>
                   </div>
                   <div className="flex gap-1.5 shrink-0 mt-1">
                     <button
@@ -544,8 +515,7 @@ function AdminPanel() {
                     </button>
                   </div>
                 </div>
-                );
-              })}
+              ))}
             </div>
           </motion.div>
         )}
@@ -554,17 +524,8 @@ function AdminPanel() {
         {tab === "projects" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <form onSubmit={addProject} className="space-y-3 mb-8">
-              {/* Language tabs */}
-              <div className="flex gap-1 bg-glass-surface border border-border rounded-lg p-0.5">
-                {LANGS.map((l) => (
-                  <button key={l.key} type="button" onClick={() => setFormLang(l.key)}
-                    className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${formLang === l.key ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"}`}>
-                    {l.label}
-                  </button>
-                ))}
-              </div>
-              <input className={inputClass} placeholder="Project title" required value={projForm[formLang].title} onChange={(e) => setProjLang("title", e.target.value)} />
-              <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Description" required value={projForm[formLang].description} onChange={(e) => setProjLang("description", e.target.value)} />
+              <input className={inputClass} placeholder="Project title" required value={projForm.title} onChange={(e) => setProjForm({ ...projForm, title: e.target.value })} />
+              <textarea className={`${inputClass} resize-none`} rows={3} placeholder="Description" required value={projForm.description} onChange={(e) => setProjForm({ ...projForm, description: e.target.value })} />
               <input className={inputClass} placeholder="Tags (comma separated, e.g. React, Node.js)" value={projForm.tags} onChange={(e) => setProjForm({ ...projForm, tags: e.target.value })} />
               <div className="grid grid-cols-2 gap-3">
                 <input className={inputClass} placeholder="GitHub URL (optional)" value={projForm.github} onChange={(e) => setProjForm({ ...projForm, github: e.target.value })} />
@@ -582,13 +543,13 @@ function AdminPanel() {
               </div>
             </form>
             <div className="mb-8">
-              <p className="text-xs uppercase tracking-wide text-text-muted mb-2">Live Preview ({LANGS.find((l) => l.key === formLang)?.label})</p>
+              <p className="text-xs uppercase tracking-wide text-text-muted mb-2">Live Preview</p>
               <div className="bg-glass-surface backdrop-blur-md border border-border rounded-lg p-4">
                 <p className="text-text-primary font-medium text-sm">
-                  {projForm[formLang].title || "Project title"}
+                  {projForm.title || "Project title"}
                 </p>
                 <p className="text-text-secondary text-xs mt-1 line-clamp-2">
-                  {projForm[formLang].description || "Description preview..."}
+                  {projForm.description || "Description preview..."}
                 </p>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {(projForm.tags
@@ -624,13 +585,11 @@ function AdminPanel() {
               <p className="text-text-muted text-sm text-center py-8">No extra projects added yet.</p>
             )}
             <div className="space-y-3">
-              {projects.map((proj) => {
-                const d = proj.en || proj;
-                return (
+              {projects.map((proj) => (
                 <div key={proj.id} className={`bg-glass-surface backdrop-blur-md border rounded-lg p-4 flex items-start justify-between gap-4 ${editingProjId === proj.id ? "border-accent" : "border-border"}`}>
                   <div>
-                    <p className="text-text-primary font-medium text-sm">{d.title || proj.title}</p>
-                    <p className="text-text-secondary text-xs mt-1 line-clamp-2">{d.description || proj.description}</p>
+                    <p className="text-text-primary font-medium text-sm">{proj.title}</p>
+                    <p className="text-text-secondary text-xs mt-1 line-clamp-2">{proj.description}</p>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {proj.tags?.map((tag) => (
                         <span key={tag} className="text-xs text-text-muted font-mono bg-bg-secondary px-1.5 py-0.5 rounded">{tag}</span>
@@ -652,8 +611,7 @@ function AdminPanel() {
                     </button>
                   </div>
                 </div>
-                );
-              })}
+              ))}
             </div>
           </motion.div>
         )}
