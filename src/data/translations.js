@@ -29,6 +29,7 @@ const translations = {
       heading: "Experience",
       roles: [
         {
+          id: "computer-technician",
           title: "Computer Technician",
           company: "Uniway Computers",
           period: "Present",
@@ -36,6 +37,7 @@ const translations = {
             "Diagnosing and repairing hardware and software issues. Providing technical support and building custom PC systems for clients. Managing inventory and ensuring quality service delivery.",
         },
         {
+          id: "fullstack-intern",
           title: "Full Stack Developer Intern",
           company: "GridLabel",
           period: "Internship",
@@ -48,16 +50,22 @@ const translations = {
       heading: "Projects",
       items: [
         {
+          id: "renomana",
           title: "RenoMana",
           description:
             "A CMPT 370 school assignment project: a renovation management platform for small contractors. It supports project scheduling, inventory and employee assignment tracking, customer renovation requests, and review collection through a JavaFX desktop app with a Flask + MongoDB backend.",
           tags: ["Java", "JavaFX", "Flask", "MongoDB", "Docker"],
+          github: "https://git.cs.usask.ca/xpo285/cmpt370-g29",
+          live: "#",
         },
         {
+          id: "usask-gpa",
           title: "USask GPA Estimator",
           description:
             "An unofficial GPA calculator that parses USask unofficial transcript PDFs and gives a quick academic standing estimate. It supports editing grades, adding future courses for simulation, and handling retaken courses by using the newest grade.",
           tags: ["Python", "Tkinter", "PDF Parsing", "Data Processing"],
+          github: "https://github.com/remker1/USask-GPA-Calculator",
+          live: "#",
         },
       ],
     },
@@ -115,6 +123,7 @@ const translations = {
       heading: "工作经历",
       roles: [
         {
+          id: "computer-technician",
           title: "计算机技术员",
           company: "Uniway Computers",
           period: "至今",
@@ -122,6 +131,7 @@ const translations = {
             "诊断和修复硬件及软件问题。为客户提供技术支持并组装定制电脑系统。管理库存并确保优质服务交付。",
         },
         {
+          id: "fullstack-intern",
           title: "全栈开发实习生",
           company: "GridLabel",
           period: "实习",
@@ -134,16 +144,22 @@ const translations = {
       heading: "项目",
       items: [
         {
+          id: "renomana",
           title: "RenoMana",
           description:
             "CMPT 370 课程作业项目：面向小型装修公司的管理平台。支持项目排期、库存与员工分配管理，并提供客户装修申请和评价反馈功能。桌面端使用 JavaFX，后端基于 Flask + MongoDB。",
           tags: ["Java", "JavaFX", "Flask", "MongoDB", "Docker"],
+          github: "https://git.cs.usask.ca/xpo285/cmpt370-g29",
+          live: "#",
         },
         {
+          id: "usask-gpa",
           title: "USask GPA Estimator",
           description:
             "一个非官方 GPA 计算工具：解析萨大非官方成绩单 PDF，快速估算当前学业成绩。支持修改成绩、添加未来课程做模拟，并在重修场景下使用最新成绩进行计算。",
           tags: ["Python", "Tkinter", "PDF Parsing", "Data Processing"],
+          github: "https://github.com/remker1/USask-GPA-Calculator",
+          live: "#",
         },
       ],
     },
@@ -198,6 +214,7 @@ const translations = {
       heading: "Expérience",
       roles: [
         {
+          id: "computer-technician",
           title: "Technicien informatique",
           company: "Uniway Computers",
           period: "Actuel",
@@ -205,6 +222,7 @@ const translations = {
             "Diagnostic et réparation de problèmes matériels et logiciels. Support technique et assemblage de systèmes PC personnalisés pour les clients. Gestion des stocks et assurance de la qualité du service.",
         },
         {
+          id: "fullstack-intern",
           title: "Stagiaire développeur full stack",
           company: "GridLabel",
           period: "Stage",
@@ -217,16 +235,22 @@ const translations = {
       heading: "Projets",
       items: [
         {
+          id: "renomana",
           title: "RenoMana",
           description:
             "Projet scolaire CMPT 370 : une plateforme de gestion de rénovation pour petites entreprises. Elle couvre la planification des projets, le suivi des stocks et des affectations d'employés, ainsi que les demandes clients et les avis, avec une app JavaFX et un backend Flask + MongoDB.",
           tags: ["Java", "JavaFX", "Flask", "MongoDB", "Docker"],
+          github: "https://git.cs.usask.ca/xpo285/cmpt370-g29",
+          live: "#",
         },
         {
+          id: "usask-gpa",
           title: "USask GPA Estimator",
           description:
             "Un calculateur de GPA non officiel qui analyse les relevés de notes PDF non officiels de l'USask pour estimer rapidement la situation académique. Il permet de modifier les notes, d'ajouter des cours futurs et de gérer les reprises en conservant la note la plus récente.",
           tags: ["Python", "Tkinter", "PDF Parsing", "Data Processing"],
+          github: "https://github.com/remker1/USask-GPA-Calculator",
+          live: "#",
         },
       ],
     },
