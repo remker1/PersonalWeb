@@ -4,7 +4,6 @@ import {
   getProjects,
   getPhotos,
 } from "../api";
-import { isSupabaseConfigured } from "../lib/supabase";
 import {
   getExtraExperiences,
   getExtraProjects,
@@ -12,9 +11,8 @@ import {
 } from "../data/dynamicContent";
 
 /**
- * Merge localStorage items with DB items.
+ * Merge localStorage items with API items.
  * localStorage items win when they share the same id or title.
- * DB-only items are appended.
  */
 function mergeLocalAndDb(localItems, dbItems = []) {
   if (!dbItems || dbItems.length === 0) return localItems;
@@ -34,7 +32,6 @@ function mergeLocalAndDb(localItems, dbItems = []) {
 }
 
 export function useExperiencesContent() {
-  const usingDb = isSupabaseConfigured();
   const [items, setItems] = useState(() => getExtraExperiences());
   const [hasFetched, setHasFetched] = useState(false);
 
@@ -42,10 +39,6 @@ export function useExperiencesContent() {
     const onStorage = () => setItems(getExtraExperiences());
     window.addEventListener("storage", onStorage);
 
-    if (!usingDb) {
-      setHasFetched(true);
-      return () => window.removeEventListener("storage", onStorage);
-    }
     getExperiences()
       .then((data) => {
         if (data && data.length > 0) {
@@ -60,11 +53,10 @@ export function useExperiencesContent() {
   }, []);
 
   const hasServerData = hasFetched && items.length > 0;
-  return { items, usingDb, hasServerData };
+  return { items, hasServerData };
 }
 
 export function useProjectsContent() {
-  const usingDb = isSupabaseConfigured();
   const [items, setItems] = useState(() => getExtraProjects());
   const [hasFetched, setHasFetched] = useState(false);
 
@@ -72,10 +64,6 @@ export function useProjectsContent() {
     const onStorage = () => setItems(getExtraProjects());
     window.addEventListener("storage", onStorage);
 
-    if (!usingDb) {
-      setHasFetched(true);
-      return () => window.removeEventListener("storage", onStorage);
-    }
     getProjects()
       .then((data) => {
         if (data && data.length > 0) {
@@ -90,11 +78,10 @@ export function useProjectsContent() {
   }, []);
 
   const hasServerData = hasFetched && items.length > 0;
-  return { items, usingDb, hasServerData };
+  return { items, hasServerData };
 }
 
 export function usePhotosContent() {
-  const usingDb = isSupabaseConfigured();
   const [items, setItems] = useState(() => getExtraPhotos());
   const [hasFetched, setHasFetched] = useState(false);
 
@@ -102,10 +89,6 @@ export function usePhotosContent() {
     const onStorage = () => setItems(getExtraPhotos());
     window.addEventListener("storage", onStorage);
 
-    if (!usingDb) {
-      setHasFetched(true);
-      return () => window.removeEventListener("storage", onStorage);
-    }
     getPhotos()
       .then((data) => {
         if (data && data.length > 0) {
@@ -120,5 +103,5 @@ export function usePhotosContent() {
   }, []);
 
   const hasServerData = hasFetched && items.length > 0;
-  return { items, usingDb, hasServerData };
+  return { items, hasServerData };
 }

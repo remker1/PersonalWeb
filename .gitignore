@@ -31,3 +31,10 @@ backend/data/*.json
 
 DEPLOY.md
 README.md
+
+# Deployment (contains secrets)
+docker-compose.yml
+deploy.sh
+server-setup.sh
+ecosystem.config.cjs
+supabase/

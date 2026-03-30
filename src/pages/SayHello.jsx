@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { submitMessage } from "../api";
+import logoImg from "../assets/logo.jpeg";
 
 const STORAGE_KEY = "contact_submissions_v1";
 
@@ -45,8 +46,9 @@ export default function SayHello() {
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             <Link
               to="/"
-              className="text-lg font-semibold text-text-primary hover:text-accent transition-colors"
+              className="flex items-center gap-2 text-lg font-semibold text-text-primary hover:text-accent transition-colors"
             >
+              <img src={logoImg} alt="remker1" className="w-8 h-8 rounded-full object-cover" />
               remker1
             </Link>
             <Link
