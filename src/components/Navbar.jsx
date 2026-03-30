@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
+import logoImg from "../assets/logo.jpeg";
 
 const navKeys = [
   { key: "about", href: "#about" },
@@ -46,8 +47,9 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
         <a
           href="#"
-          className="text-lg font-semibold text-text-primary hover:text-accent transition-colors"
+          className="flex items-center gap-2 text-lg font-semibold text-text-primary hover:text-accent transition-colors"
         >
+          <img src={logoImg} alt="remker1" className="w-8 h-8 rounded-full object-cover" />
           remker1
         </a>
 
