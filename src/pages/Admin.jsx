@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import AnimatedBackground, { SEASON_STORAGE_KEY, getSeason } from "../components/AnimatedBackground";
 import { useTheme } from "../contexts/ThemeContext";
-import { isSupabaseConfigured } from "../lib/supabase";
 import {
   getExtraExperiences, saveExtraExperiences,
   getExtraProjects, saveExtraProjects,
@@ -84,17 +83,6 @@ function AdminPanel() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      // If no database configured, use localStorage directly
-      if (!isSupabaseConfigured()) {
-        if (mounted) {
-          setExperiences(getExtraExperiences());
-          setProjects(getExtraProjects());
-          setPhotos(getExtraPhotos());
-          setMessages(JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "[]"));
-          setApiAvailable(false);
-        }
-        return;
-      }
       try {
         const [ex, pr, ph, ms] = await Promise.all([
           getExperiences(),
