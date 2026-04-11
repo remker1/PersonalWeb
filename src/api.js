@@ -52,6 +52,19 @@ export async function getPhotos() {
   }
 }
 
+// ——— Translation ———
+
+export async function translateText(q, target) {
+  const res = await fetch(`${API_BASE}/api/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ q, source: "en", target }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.translatedText;
+}
+
 // ——— Contact form ———
 
 export async function submitMessage(entry) {

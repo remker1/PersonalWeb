@@ -1,10 +1,14 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useProjectsContent } from "../hooks/useContent";
+import { useTranslatedItems } from "../hooks/useTranslatedItems";
+
+const PROJ_FIELDS = ["title", "description"];
 
 export default function Projects() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { items } = useProjectsContent();
+  const displayItems = useTranslatedItems(items, lang, PROJ_FIELDS);
 
   return (
     <section id="projects" className="py-24 px-6">
@@ -27,7 +31,7 @@ export default function Projects() {
         />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map((project, i) => (
+          {displayItems.map((project, i) => (
             <motion.div
               key={`proj-${project.title}-${project.id || i}`}
               className="bg-glass-surface backdrop-blur-md border border-border rounded-lg p-6 group"
