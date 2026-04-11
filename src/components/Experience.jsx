@@ -1,10 +1,14 @@
 import { motion } from "motion/react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useExperiencesContent } from "../hooks/useContent";
+import { useTranslatedItems } from "../hooks/useTranslatedItems";
+
+const EXP_FIELDS = ["title", "company", "description"];
 
 export default function Experience() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { items } = useExperiencesContent();
+  const displayItems = useTranslatedItems(items, lang, EXP_FIELDS);
 
   return (
     <section id="experience" className="py-24 px-6 bg-glass-section backdrop-blur-sm">
@@ -27,7 +31,7 @@ export default function Experience() {
         />
 
         <div className="space-y-8">
-          {items.map((exp, i) => (
+          {displayItems.map((exp, i) => (
             <motion.div
               key={`exp-${exp.title}-${exp.id || i}`}
               className="relative pl-8 border-l-2 border-border"
