@@ -13,6 +13,7 @@ if (!existsSync(UPLOADS_DIR)) mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const PORT = process.env.PORT || 3000;
+const LIBRETRANSLATE_URL = process.env.LIBRETRANSLATE_URL || "http://libretranslate:5000";
 
 // PostgreSQL connection
 const pool = new pg.Pool({
@@ -321,6 +322,27 @@ app.post("/api/admin", async (req, res) => {
   } catch (err) {
     console.error("Admin API error:", err);
     return res.status(500).json({ error: err.message || "Server error" });
+  }
+});
+
+// ——— Translation proxy ———
+app.post("/api/translate", async (req, res) => {
+  const { q, source = "en", target } = req.body || {};
+  if (!q || !target) return res.status(400).json({ error: "Missing q or target" });
+  try {
+    const ltRes = await fetch(`${LIBRETRANSLATE_URL}/translate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q, source, target, format: "text" }),
+    });
+    if (!ltRes.ok) {
+      const err = await ltRes.text();
+      return res.status(502).json({ error: err });
+    }
+    const data = await ltRes.json();
+    res.json({ translatedText: data.translatedText });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
   }
 });
 
