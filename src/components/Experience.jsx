@@ -3,7 +3,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useExperiencesContent } from "../hooks/useContent";
 import { useTranslatedItems } from "../hooks/useTranslatedItems";
 
-const EXP_FIELDS = ["title", "company", "description"];
+const EXP_FIELDS = ["title", "description"];
 
 export default function Experience() {
   const { t, lang } = useLanguage();
