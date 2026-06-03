@@ -12,7 +12,7 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       <Routes location={location} key={location.pathname}>
         <Route
           path="/"
@@ -40,11 +40,7 @@ function AnimatedRoutes() {
         />
         <Route
           path="/admin"
-          element={
-            <PageTransition>
-              <Admin />
-            </PageTransition>
-          }
+          element={<Admin />}
         />
       </Routes>
     </AnimatePresence>
