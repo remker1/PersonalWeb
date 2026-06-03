@@ -33,9 +33,16 @@ async function translateField(text, lang) {
   if (!text) return text;
   const cached = readCache(lang, text);
   if (cached !== null) return cached;
-  const translated = await translateText(text, lang);
-  writeCache(lang, text, translated);
-  return translated;
+  try {
+    const translated = await translateText(text, lang);
+    // Only cache if it looks like a real translation (not an error string)
+    if (translated && translated !== text) {
+      writeCache(lang, text, translated);
+    }
+    return translated || text;
+  } catch {
+    return text; // fall back silently, don't cache failures
+  }
 }
 
 async function translateItem(item, lang, fields) {
