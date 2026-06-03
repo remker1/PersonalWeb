@@ -14,7 +14,9 @@ export default async function handler(req, res) {
   if (!ltUrl) return res.status(503).json({ error: "Translation service not configured" });
 
   try {
-    const ltRes = await fetch(`${ltUrl}/translate`, {
+    // ltUrl is e.g. https://translate.remker1.dev (no path needed) or http://host:5000
+    const endpoint = ltUrl.endsWith("/translate") ? ltUrl : `${ltUrl}/translate`;
+    const ltRes = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ q, source, target, format: "text" }),
