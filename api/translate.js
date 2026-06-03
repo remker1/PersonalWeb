@@ -1,6 +1,49 @@
-// POST /api/translate  — proxy to LibreTranslate (hosted or self-hosted)
+// POST /api/translate
+// Uses MyMemory (free, no API key) with optional email for higher limits.
+// Alternatively falls back to a self-hosted LibreTranslate if LIBRETRANSLATE_URL is set.
 
 import { setCors } from "./_lib.js";
+
+const LANG_MAP = {
+  zh: "zh-CN",
+  en: "en-GB",
+};
+
+function normLang(code) {
+  return LANG_MAP[code] || code;
+}
+
+async function translateMyMemory(q, source, target) {
+  const langpair = `${normLang(source)}|${normLang(target)}`;
+  const email = process.env.MYMEMORY_EMAIL || "";
+  const url = new URL("https://api.mymemory.translated.net/get");
+  url.searchParams.set("q", q);
+  url.searchParams.set("langpair", langpair);
+  if (email) url.searchParams.set("de", email);
+
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.responseStatus !== 200) throw new Error(data.responseDetails || "Translation failed");
+  return data.responseData.translatedText;
+}
+
+async function translateLibre(q, source, target) {
+  const ltUrl = process.env.LIBRETRANSLATE_URL;
+  const endpoint = ltUrl.endsWith("/translate") ? ltUrl : `${ltUrl}/translate`;
+  const body = { q, source, target, format: "text" };
+  const apiKey = process.env.LIBRETRANSLATE_API_KEY;
+  if (apiKey) body.api_key = apiKey;
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.translatedText;
+}
 
 export default async function handler(req, res) {
   setCors(res);
@@ -10,25 +53,18 @@ export default async function handler(req, res) {
   const { q, source = "en", target } = req.body ?? {};
   if (!q || !target) return res.status(400).json({ error: "Missing q or target" });
 
-  const ltUrl = process.env.LIBRETRANSLATE_URL || "https://libretranslate.com";
-  const ltApiKey = process.env.LIBRETRANSLATE_API_KEY || "";
-
   try {
-    const endpoint = ltUrl.endsWith("/translate") ? ltUrl : `${ltUrl}/translate`;
-    const body = { q, source, target, format: "text" };
-    if (ltApiKey) body.api_key = ltApiKey;
+    let translatedText;
 
-    const ltRes = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!ltRes.ok) {
-      const err = await ltRes.text();
-      return res.status(502).json({ error: err });
+    if (process.env.LIBRETRANSLATE_URL) {
+      // Prefer self-hosted / paid LibreTranslate if configured
+      translatedText = await translateLibre(q, source, target);
+    } else {
+      // Default: MyMemory (free, no key needed)
+      translatedText = await translateMyMemory(q, source, target);
     }
-    const data = await ltRes.json();
-    return res.json({ translatedText: data.translatedText });
+
+    return res.json({ translatedText });
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
