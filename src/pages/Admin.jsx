@@ -40,11 +40,9 @@ function PasswordGate({ onUnlock }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
-      <motion.form
+      <form
         onSubmit={handleSubmit}
         className="w-full max-w-xs"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-xl font-semibold text-text-primary mb-6 text-center">
           Admin Access
@@ -68,7 +66,7 @@ function PasswordGate({ onUnlock }) {
         {error && (
           <p className="mt-2 text-red-400 text-xs text-center">Wrong password</p>
         )}
-      </motion.form>
+      </form>
     </div>
   );
 }
