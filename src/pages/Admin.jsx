@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { marked } from "marked";
 import { motion, AnimatePresence } from "motion/react";
 import AnimatedBackground, { SEASON_STORAGE_KEY, getSeason } from "../components/AnimatedBackground";
 import { useTheme } from "../contexts/ThemeContext";
@@ -16,6 +17,7 @@ import {
   setExperiences as apiSetExperiences, setProjects as apiSetProjects, setPhotos as apiSetPhotos,
   verifyAdminPassword,
   getServerStats,
+  getPosts, createPost, updatePost, deletePost,
 } from "../api";
 
 const CONTACT_STORAGE_KEY = "contact_submissions_v1";
@@ -367,6 +369,7 @@ function AdminPanel() {
     { key: "projects", label: "Projects" },
     { key: "photos", label: "Photos" },
     { key: "messages", label: "Messages" },
+    { key: "blog", label: "Blog" },
     { key: "server", label: "Server" },
     { key: "adjustments", label: "Adjustments" },
   ];
@@ -757,6 +760,11 @@ function AdminPanel() {
           </motion.div>
         )}
 
+        {/* Blog Tab */}
+        {tab === "blog" && (
+          <BlogPanel inputClass={inputClass} />
+        )}
+
         {/* Server Tab */}
         {tab === "server" && (
           <ServerStatsPanel />
@@ -934,6 +942,221 @@ function DayPanel() {
         );
       })}
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Blog Panel – create / edit / delete posts
+   ═══════════════════════════════════════════════════════════════════ */
+function slugify(str) {
+  return str.toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+const EMPTY_POST = { title: "", slug: "", excerpt: "", content: "", tags: "", published: false };
+
+function BlogPanel({ inputClass }) {
+  const [posts, setPosts] = useState([]);
+  const [form, setForm] = useState(EMPTY_POST);
+  const [editingSlug, setEditingSlug] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [preview, setPreview] = useState(false);
+
+  useEffect(() => {
+    getPosts(true).then((data) => { setPosts(data); setLoading(false); });
+  }, []);
+
+  const handleTitleChange = (title) => {
+    setForm((f) => ({
+      ...f,
+      title,
+      slug: editingSlug ? f.slug : slugify(title),
+    }));
+  };
+
+  const save = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      };
+      if (editingSlug) {
+        const updated = await updatePost(editingSlug, payload);
+        setPosts((prev) => prev.map((p) => p.slug === editingSlug ? updated : p));
+        setEditingSlug(null);
+      } else {
+        const created = await createPost(payload);
+        setPosts((prev) => [created, ...prev]);
+      }
+      setForm(EMPTY_POST);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startEdit = (post) => {
+    setEditingSlug(post.slug);
+    setForm({
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt || "",
+      content: post.content || "",
+      tags: Array.isArray(post.tags) ? post.tags.join(", ") : "",
+      published: post.published,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const remove = async (slug) => {
+    if (!confirm("Delete this post?")) return;
+    await deletePost(slug);
+    setPosts((prev) => prev.filter((p) => p.slug !== slug));
+    if (editingSlug === slug) { setEditingSlug(null); setForm(EMPTY_POST); }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      <form onSubmit={save} className="space-y-3">
+        <input
+          className={inputClass}
+          placeholder="Post title"
+          required
+          value={form.title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <input
+            className={inputClass}
+            placeholder="slug (auto-filled)"
+            required
+            value={form.slug}
+            onChange={(e) => setForm({ ...form, slug: e.target.value })}
+          />
+          <input
+            className={inputClass}
+            placeholder="Tags (comma separated)"
+            value={form.tags}
+            onChange={(e) => setForm({ ...form, tags: e.target.value })}
+          />
+        </div>
+        <input
+          className={inputClass}
+          placeholder="Short excerpt / summary"
+          value={form.excerpt}
+          onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+        />
+
+        {/* Markdown editor with preview toggle */}
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs text-text-muted">Content (Markdown)</p>
+          <button
+            type="button"
+            onClick={() => setPreview(!preview)}
+            className="text-xs text-accent hover:underline"
+          >
+            {preview ? "Edit" : "Preview"}
+          </button>
+        </div>
+        {preview ? (
+          <div
+            className="prose-remker min-h-[200px] bg-glass-surface border border-border rounded-lg p-4 text-sm"
+            dangerouslySetInnerHTML={{ __html: marked.parse(form.content || "_Nothing yet_") }}
+          />
+        ) : (
+          <textarea
+            className={`${inputClass} resize-none font-mono text-xs`}
+            rows={12}
+            placeholder="Write your post in Markdown..."
+            value={form.content}
+            onChange={(e) => setForm({ ...form, content: e.target.value })}
+          />
+        )}
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <div
+              onClick={() => setForm({ ...form, published: !form.published })}
+              className={`relative w-10 h-[22px] rounded-full transition-colors duration-200 ${form.published ? "bg-accent" : "bg-border"}`}
+            >
+              <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${form.published ? "translate-x-[21px]" : "translate-x-[3px]"}`} />
+            </div>
+            <span className="text-sm text-text-secondary">
+              {form.published ? "Published" : "Draft"}
+            </span>
+          </label>
+          <div className="flex gap-2">
+            {editingSlug && (
+              <button
+                type="button"
+                onClick={() => { setEditingSlug(null); setForm(EMPTY_POST); }}
+                className="px-4 py-2 border border-border text-text-secondary text-sm rounded-lg hover:text-text-primary transition-colors"
+              >
+                Cancel
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+            >
+              {saving ? "Saving…" : editingSlug ? "Save Changes" : "Publish Post"}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div className="pt-2">
+        <p className="text-xs uppercase tracking-wide text-text-muted mb-3">
+          {posts.length} post{posts.length !== 1 ? "s" : ""}
+        </p>
+        {loading && <p className="text-text-muted text-sm text-center py-8">Loading…</p>}
+        {!loading && posts.length === 0 && (
+          <p className="text-text-muted text-sm text-center py-8">No posts yet.</p>
+        )}
+        <div className="space-y-2">
+          {posts.map((post) => (
+            <div
+              key={post.slug}
+              className={`bg-glass-surface border rounded-lg p-4 flex items-start justify-between gap-4 ${editingSlug === post.slug ? "border-accent" : "border-border"}`}
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                  <p className="text-text-primary font-medium text-sm truncate">{post.title}</p>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${post.published ? "bg-emerald-500/15 text-emerald-400" : "bg-border/60 text-text-muted"}`}>
+                    {post.published ? "published" : "draft"}
+                  </span>
+                </div>
+                <p className="text-text-muted text-xs font-mono">/{post.slug}</p>
+                {post.excerpt && (
+                  <p className="text-text-secondary text-xs mt-1 line-clamp-1">{post.excerpt}</p>
+                )}
+              </div>
+              <div className="flex gap-1.5 shrink-0">
+                <button
+                  onClick={() => startEdit(post)}
+                  className="text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-accent hover:border-accent/50 transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => remove(post.slug)}
+                  className="text-xs border border-border rounded-md px-2 py-1 text-text-muted hover:text-red-400 hover:border-red-400/50 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
