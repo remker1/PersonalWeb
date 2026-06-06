@@ -191,6 +191,52 @@ export async function deleteMessage(id) {
   if (!res.ok) throw new Error(await res.text());
 }
 
+// ——— Blog posts ———
+
+export async function getPosts(all = false) {
+  try {
+    const headers = all ? getAuthHeader() : {};
+    const res = await fetch(`${API_BASE}/api/posts`, { headers });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.items) ? data.items : [];
+  } catch { return []; }
+}
+
+export async function getPost(slug) {
+  const res = await fetch(`${API_BASE}/api/posts/${slug}`, { headers: getAuthHeader() });
+  if (!res.ok) throw new Error("Post not found");
+  return res.json();
+}
+
+export async function createPost(post) {
+  const res = await fetch(`${API_BASE}/api/posts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    body: JSON.stringify(post),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function updatePost(slug, post) {
+  const res = await fetch(`${API_BASE}/api/posts/${slug}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    body: JSON.stringify(post),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function deletePost(slug) {
+  const res = await fetch(`${API_BASE}/api/posts/${slug}`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
 export async function getServerStats() {
   const res = await fetch(`${API_BASE}/api/system/stats`, { headers: getAuthHeader() });
   if (!res.ok) throw new Error(await res.text());
