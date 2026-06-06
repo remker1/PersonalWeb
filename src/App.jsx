@@ -7,6 +7,9 @@ import Home from "./pages/Home";
 import PhotographyGallery from "./pages/PhotographyGallery";
 import SayHello from "./pages/SayHello";
 import Admin from "./pages/Admin";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import NotFound from "./pages/NotFound";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -42,6 +45,23 @@ function AnimatedRoutes() {
           path="/admin"
           element={<Admin />}
         />
+        <Route
+          path="/blog"
+          element={
+            <PageTransition>
+              <Blog />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/blog/:slug"
+          element={
+            <PageTransition>
+              <BlogPost />
+            </PageTransition>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
   );
