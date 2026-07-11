@@ -11,7 +11,7 @@ const NAV_ITEMS = [
 
 export function TestersLayout({ children }) {
   const t = useT();
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, languageNames } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
@@ -44,13 +44,18 @@ export function TestersLayout({ children }) {
             })}
           </nav>
           <div className="ml-auto flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => setLang(lang === "zh" ? "en" : "zh")}
-              className="px-2 py-1 rounded-md text-sm text-text-secondary hover:bg-bg-secondary transition-colors"
-              title="Language"
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              className="px-2 py-1 rounded-md text-sm border border-border bg-bg-card text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer"
+              aria-label="Language"
             >
-              {lang === "zh" ? "EN" : "中文"}
-            </button>
+              {Object.entries(languageNames).map(([code, name]) => (
+                <option key={code} value={code}>
+                  {name}
+                </option>
+              ))}
+            </select>
             <button
               onClick={toggleTheme}
               className="px-2 py-1 rounded-md text-sm text-text-secondary hover:bg-bg-secondary transition-colors"
