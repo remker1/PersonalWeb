@@ -135,7 +135,7 @@ export default function KeyboardTester() {
   useDocTitle(t("keyboard"));
 
   const [layoutName, setLayoutName] = useState(IS_MAC ? "mac" : "win");
-  const [showNumpad, setShowNumpad] = useState(false);
+  const [showNumpad, setShowNumpad] = useState(true);
   const [pressed, setPressed] = useState(() => new Set());
   const [tested, setTested] = useState(() => new Set());
   const [lastEvent, setLastEvent] = useState(null);
