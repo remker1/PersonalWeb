@@ -1,0 +1,164 @@
+import { useEffect } from "react";
+import { useLanguage } from "../../contexts/LanguageContext";
+
+export const IS_TESTERS_HOST =
+  typeof window !== "undefined" &&
+  window.location.hostname.split(".")[0] === "testers";
+
+export const TESTERS_BASE = IS_TESTERS_HOST ? "" : "/testers";
+
+export const tPath = (p) => `${TESTERS_BASE}${p}` || "/";
+
+export const IS_MAC =
+  typeof navigator !== "undefined" &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+
+const dict = {
+  en: {
+    siteTitle: "Device Testers",
+    tagline: "Test your keyboard, webcam, speakers and microphone — right in the browser.",
+    privacy: "Everything runs locally in your browser. No audio, video or keystroke data ever leaves your device.",
+    home: "Home",
+    keyboard: "Keyboard Tester",
+    webcam: "Webcam Tester",
+    audio: "Speaker & Mic Tester",
+    keyboardDesc: "Press every key and see it light up. Windows and Mac layouts supported.",
+    webcamDesc: "Check your camera feed, resolution and frame rate, and take a test snapshot.",
+    audioDesc: "Play left/right channel tones, watch your mic level, and record a playback test.",
+    open: "Open tester",
+    backToSite: "remker1.dev",
+    // keyboard
+    kbLayout: "Layout",
+    kbWin: "Windows",
+    kbMac: "Mac",
+    kbNumpad: "Numpad",
+    kbReset: "Reset",
+    kbTested: "keys tested",
+    kbHint: "Click here, then press any key on your keyboard.",
+    kbLastKey: "Last key",
+    kbNoKey: "No key pressed yet",
+    kbHistory: "History",
+    kbFnNote: "Grayed-out keys (like Fn) are handled by hardware and can't be detected by the browser. Some system shortcuts (e.g. ⌘+Tab, Win+L) are captured by the OS before reaching the page.",
+    kbKey: "key",
+    kbCode: "code",
+    kbKeyCode: "keyCode",
+    kbLocation: "location",
+    // webcam
+    wcStart: "Start camera",
+    wcStop: "Stop camera",
+    wcDevice: "Camera",
+    wcMirror: "Mirror",
+    wcSnapshot: "Take snapshot",
+    wcResolution: "Resolution",
+    wcFps: "Frame rate",
+    wcMeasuredFps: "Measured FPS",
+    wcIdle: "Camera is off. Click “Start camera” and allow access when prompted.",
+    wcDenied: "Camera access was denied. Allow camera access in your browser's site settings, then try again.",
+    wcNotFound: "No camera was found on this device.",
+    wcInUse: "The camera appears to be in use by another app. Close it and try again.",
+    wcError: "Could not start the camera",
+    // audio
+    spTitle: "Speaker test",
+    spDesc: "Play a tone through each channel. You should hear it only on the matching side.",
+    spLeft: "Left channel",
+    spRight: "Right channel",
+    spBoth: "Both channels",
+    spStopTone: "Stop tone",
+    spFreq: "Tone frequency",
+    spOutput: "Output device",
+    spOutputUnsupported: "Your browser doesn't support choosing an output device (Chrome or Edge required); the default speakers will be used.",
+    micTitle: "Microphone test",
+    micDesc: "Start the mic and speak — the level meter and waveform should move.",
+    micStart: "Start microphone",
+    micStop: "Stop microphone",
+    micDevice: "Microphone",
+    micLevel: "Input level",
+    micRecord: "Record 5s clip",
+    micRecording: "Recording…",
+    micPlayback: "Playback",
+    micSampleRate: "Sample rate",
+    micDenied: "Microphone access was denied. Allow mic access in your browser's site settings, then try again.",
+    micError: "Could not start the microphone",
+    micRecUnsupported: "Recording is not supported in this browser.",
+  },
+  zh: {
+    siteTitle: "设备测试工具",
+    tagline: "在浏览器里直接测试你的键盘、摄像头、扬声器和麦克风。",
+    privacy: "所有测试均在浏览器本地运行，任何音频、视频或按键数据都不会离开你的设备。",
+    home: "首页",
+    keyboard: "键盘测试",
+    webcam: "摄像头测试",
+    audio: "扬声器 & 麦克风测试",
+    keyboardDesc: "按下每个按键即可看到高亮反馈，支持 Windows 和 Mac 键盘布局。",
+    webcamDesc: "查看摄像头画面、分辨率和帧率，还可以拍一张测试快照。",
+    audioDesc: "播放左右声道测试音，实时查看麦克风音量，并录音回放测试。",
+    open: "开始测试",
+    backToSite: "remker1.dev",
+    kbLayout: "布局",
+    kbWin: "Windows",
+    kbMac: "Mac",
+    kbNumpad: "数字小键盘",
+    kbReset: "重置",
+    kbTested: "个按键已测试",
+    kbHint: "点击此区域，然后按下键盘上的任意键。",
+    kbLastKey: "最近按键",
+    kbNoKey: "还没有按下任何键",
+    kbHistory: "按键记录",
+    kbFnNote: "灰色按键（如 Fn）由硬件处理，浏览器无法检测。部分系统快捷键（如 ⌘+Tab、Win+L）会被操作系统拦截，页面收不到。",
+    kbKey: "键值",
+    kbCode: "键码",
+    kbKeyCode: "keyCode",
+    kbLocation: "位置",
+    wcStart: "开启摄像头",
+    wcStop: "关闭摄像头",
+    wcDevice: "摄像头",
+    wcMirror: "镜像",
+    wcSnapshot: "拍摄快照",
+    wcResolution: "分辨率",
+    wcFps: "标称帧率",
+    wcMeasuredFps: "实测帧率",
+    wcIdle: "摄像头未开启。点击“开启摄像头”，并在弹窗中允许访问。",
+    wcDenied: "摄像头权限被拒绝。请在浏览器的网站设置中允许摄像头访问后重试。",
+    wcNotFound: "未检测到摄像头设备。",
+    wcInUse: "摄像头可能被其他应用占用，请关闭后重试。",
+    wcError: "无法启动摄像头",
+    spTitle: "扬声器测试",
+    spDesc: "分别播放左右声道测试音，你应该只在对应一侧听到声音。",
+    spLeft: "左声道",
+    spRight: "右声道",
+    spBoth: "双声道",
+    spStopTone: "停止播放",
+    spFreq: "测试音频率",
+    spOutput: "输出设备",
+    spOutputUnsupported: "当前浏览器不支持选择输出设备（需 Chrome 或 Edge），将使用系统默认扬声器。",
+    micTitle: "麦克风测试",
+    micDesc: "开启麦克风后说话，音量条和波形应随声音变化。",
+    micStart: "开启麦克风",
+    micStop: "关闭麦克风",
+    micDevice: "麦克风",
+    micLevel: "输入音量",
+    micRecord: "录制 5 秒",
+    micRecording: "录音中…",
+    micPlayback: "回放",
+    micSampleRate: "采样率",
+    micDenied: "麦克风权限被拒绝。请在浏览器的网站设置中允许麦克风访问后重试。",
+    micError: "无法启动麦克风",
+    micRecUnsupported: "当前浏览器不支持录音功能。",
+  },
+};
+
+export function useT() {
+  const { lang } = useLanguage();
+  return (key) => dict[lang]?.[key] ?? dict.en[key] ?? key;
+}
+
+export function useDocTitle(suffix) {
+  useEffect(() => {
+    const prev = document.title;
+    document.title = suffix ? `${suffix} · testers.remker1.dev` : "testers.remker1.dev";
+    return () => {
+      document.title = prev;
+    };
+  }, [suffix]);
+}
+
