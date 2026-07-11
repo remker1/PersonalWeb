@@ -1,5 +1,10 @@
-// GET  /api/posts          — public: published only | admin: all
-// POST /api/posts          — admin: create post
+// GET    /api/posts        — public: published only | admin: all
+// POST   /api/posts        — admin: create post
+// GET    /api/posts/:slug  — public if published, admin sees unpublished too
+//   (routed here via the vercel.json rewrite /api/posts/:slug → /api/posts?slug=:slug
+//    to stay under the Hobby-plan serverless function limit)
+// PUT    /api/posts/:slug  — admin: update
+// DELETE /api/posts/:slug  — admin: delete
 
 import { getSupabase, setCors, isAdmin } from "./_lib.js";
 
@@ -10,12 +15,61 @@ function normalizeTags(tags) {
   return [];
 }
 
+async function handleItem(req, res, supabase, admin, slug) {
+  // ── GET ──────────────────────────────────────────────────────────
+  if (req.method === "GET") {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("slug", slug)
+      .single();
+    if (error || !data) return res.status(404).json({ error: "Post not found" });
+    if (!data.published && !admin) return res.status(404).json({ error: "Post not found" });
+    return res.json(data);
+  }
+
+  if (!admin) return res.status(401).json({ error: "Unauthorized" });
+
+  // ── PUT ──────────────────────────────────────────────────────────
+  if (req.method === "PUT") {
+    const { title, slug: newSlug, excerpt, content, tags, published } = req.body ?? {};
+    const { data, error } = await supabase
+      .from("posts")
+      .update({
+        title,
+        slug: newSlug || slug,
+        excerpt: excerpt || "",
+        content: content || "",
+        tags: normalizeTags(tags),
+        published: published ?? false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("slug", slug)
+      .select()
+      .single();
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
+  }
+
+  // ── DELETE ───────────────────────────────────────────────────────
+  if (req.method === "DELETE") {
+    const { error } = await supabase.from("posts").delete().eq("slug", slug);
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(204).end();
+  }
+
+  res.status(405).json({ error: "Method not allowed" });
+}
+
 export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const supabase = getSupabase();
   const admin = isAdmin(req);
+
+  const { slug } = req.query;
+  if (slug) return handleItem(req, res, supabase, admin, slug);
 
   // ── GET ──────────────────────────────────────────────────────────
   if (req.method === "GET") {
@@ -35,12 +89,12 @@ export default async function handler(req, res) {
 
   // ── POST ─────────────────────────────────────────────────────────
   if (req.method === "POST") {
-    const { title, slug, excerpt, content, tags, published } = req.body ?? {};
+    const { title, slug: newSlug, excerpt, content, tags, published } = req.body ?? {};
     const { data, error } = await supabase
       .from("posts")
       .insert({
         title,
-        slug,
+        slug: newSlug,
         excerpt: excerpt || "",
         content: content || "",
         tags: normalizeTags(tags),
