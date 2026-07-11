@@ -10,6 +10,8 @@ import Admin from "./pages/Admin";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
+import TestersApp from "./pages/testers/TestersApp";
+import { IS_TESTERS_HOST } from "./pages/testers/testersUtils";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -61,6 +63,7 @@ function AnimatedRoutes() {
             </PageTransition>
           }
         />
+        <Route path="/testers/*" element={<TestersApp />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
@@ -72,7 +75,13 @@ function App() {
     <ThemeProvider>
       <LanguageProvider>
         <BrowserRouter>
-          <AnimatedRoutes />
+          {IS_TESTERS_HOST ? (
+            <Routes>
+              <Route path="/*" element={<TestersApp />} />
+            </Routes>
+          ) : (
+            <AnimatedRoutes />
+          )}
         </BrowserRouter>
       </LanguageProvider>
     </ThemeProvider>
