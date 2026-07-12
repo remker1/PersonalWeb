@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT, useDocTitle } from "./testersUtils";
 
 const COLORS = ["#e6553f", "#4f7ae0", "#4fae57", "#c98a2b", "#9a5fd0", "#2ba8b8", "#d05f8e", "#7a8a3a"];
@@ -9,9 +9,29 @@ export default function TouchTester() {
 
   const [touches, setTouches] = useState(() => new Map());
   const [maxTouches, setMaxTouches] = useState(0);
+  const [fs, setFs] = useState(false);
   const areaRef = useRef(null);
 
   const hasTouch = typeof navigator !== "undefined" && (navigator.maxTouchPoints > 0 || "ontouchstart" in window);
+
+  // native fullscreen where available; the fixed overlay is the fallback (e.g. iOS)
+  useEffect(() => {
+    if (!fs) return;
+    areaRef.current?.requestFullscreen?.().catch(() => {});
+    const onFsChange = () => {
+      if (!document.fullscreenElement) setFs(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setFs(false);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      window.removeEventListener("keydown", onKey);
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    };
+  }, [fs]);
 
   const toLocal = (e) => {
     const box = areaRef.current.getBoundingClientRect();
@@ -42,20 +62,30 @@ export default function TouchTester() {
     });
   };
 
+  const stats = (
+    <>
+      {t("tcActive")}: <span className="text-accent font-semibold">{touches.size}</span>
+      {" · "}
+      {t("tcMax")}: <span className="text-accent font-semibold">{maxTouches}</span>
+    </>
+  );
+
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold mr-auto">👆 {t("touch")}</h1>
-        <div className="text-sm text-text-secondary tabular-nums">
-          {t("tcActive")}: <span className="text-accent font-semibold">{touches.size}</span>
-          {" · "}
-          {t("tcMax")}: <span className="text-accent font-semibold">{maxTouches}</span>
-        </div>
+        <div className="text-sm text-text-secondary tabular-nums">{stats}</div>
         <button
           onClick={() => setMaxTouches(0)}
           className="px-3 py-1.5 rounded-full text-sm border border-border text-text-secondary hover:bg-bg-secondary transition-colors"
         >
           {t("kbReset")}
+        </button>
+        <button
+          onClick={() => setFs(true)}
+          className="px-3 py-1.5 rounded-full text-sm font-medium bg-accent text-bg-primary hover:bg-accent-hover transition-colors"
+        >
+          ⛶ {t("tcFullscreen")}
         </button>
       </div>
 
@@ -69,7 +99,11 @@ export default function TouchTester() {
         onPointerMove={onMove}
         onPointerUp={onEnd}
         onPointerCancel={onEnd}
-        className="relative rounded-2xl border-2 border-dashed border-border bg-bg-secondary/50 h-[60vh] overflow-hidden select-none"
+        className={`overflow-hidden select-none ${
+          fs
+            ? "fixed inset-0 z-[100] bg-bg-primary"
+            : "relative rounded-2xl border-2 border-dashed border-border bg-bg-secondary/50 h-[60vh]"
+        }`}
         style={{ touchAction: "none" }}
       >
         {touches.size === 0 && (
@@ -77,6 +111,20 @@ export default function TouchTester() {
             {t("tcHint")}
           </p>
         )}
+
+        {fs && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-full bg-bg-card/90 border border-border text-sm text-text-secondary tabular-nums shadow-lg">
+            <span className="pointer-events-none">{stats}</span>
+            <button
+              onClick={() => setFs(false)}
+              className="w-6 h-6 rounded-full border border-border flex items-center justify-center text-text-secondary hover:bg-bg-secondary transition-colors"
+              aria-label={t("tcExit")}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {[...touches.entries()].map(([id, p], i) => (
           <div
             key={id}
