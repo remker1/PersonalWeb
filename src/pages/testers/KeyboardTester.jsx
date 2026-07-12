@@ -9,16 +9,14 @@ const FN_ROW_WIN = [
   k("Esc", "Escape"), gap(1),
   k("F1", "F1"), k("F2", "F2"), k("F3", "F3"), k("F4", "F4"), gap(0.5),
   k("F5", "F5"), k("F6", "F6"), k("F7", "F7"), k("F8", "F8"), gap(0.5),
-  k("F9", "F9"), k("F10", "F10"), k("F11", "F11"), k("F12", "F12"), gap(0.25),
-  k("PrtSc", "PrintScreen"), k("ScrLk", "ScrollLock"), k("Pause", "Pause"),
+  k("F9", "F9"), k("F10", "F10"), k("F11", "F11"), k("F12", "F12"),
 ];
 
 const FN_ROW_MAC = [
   k("esc", "Escape"), gap(1),
   k("F1", "F1"), k("F2", "F2"), k("F3", "F3"), k("F4", "F4"), gap(0.5),
   k("F5", "F5"), k("F6", "F6"), k("F7", "F7"), k("F8", "F8"), gap(0.5),
-  k("F9", "F9"), k("F10", "F10"), k("F11", "F11"), k("F12", "F12"), gap(0.25),
-  k("F13", "F13"), k("F14", "F14"), k("F15", "F15"),
+  k("F9", "F9"), k("F10", "F10"), k("F11", "F11"), k("F12", "F12"),
 ];
 
 const ROW_1 = (backspaceLabel) => [
@@ -65,7 +63,9 @@ const ROW_5_MAC = [
   k("ctrl", "ControlRight", 1), gap(1.5),
 ];
 
+// first row sits on the F-key row; remaining rows align with the main block
 const NAV_ROWS = [
+  [k("PrtSc", "PrintScreen"), k("ScrLk", "ScrollLock"), k("Pause", "Pause")],
   [k("Ins", "Insert"), k("Home", "Home"), k("PgUp", "PageUp")],
   [k("Del", "Delete"), k("End", "End"), k("PgDn", "PageDown")],
   [],
@@ -74,6 +74,7 @@ const NAV_ROWS = [
 ];
 
 const NAV_ROWS_MAC = [
+  [k("F13", "F13"), k("F14", "F14"), k("F15", "F15")],
   [k("fn", null), k("Home", "Home"), k("PgUp", "PageUp")],
   [k("⌦", "Delete"), k("End", "End"), k("PgDn", "PageDown")],
   [],
@@ -244,17 +245,17 @@ export default function KeyboardTester() {
       <div
         ref={areaRef}
         tabIndex={0}
-        className="rounded-2xl border border-border bg-bg-secondary/60 p-3 sm:p-5 overflow-x-auto outline-none focus:border-accent/60"
+        className="rounded-2xl border border-border bg-bg-secondary/60 p-2 sm:p-4 overflow-x-auto outline-none focus:border-accent/60"
         onClick={() => areaRef.current?.focus()}
       >
         <div
-          className="flex gap-4 sm:gap-6 w-max mx-auto"
-          style={{ "--u": "clamp(1.5rem, 3.7vw, 2.7rem)" }}
+          className="flex gap-2 sm:gap-3 w-max mx-auto"
+          style={{ "--u": "clamp(1.35rem, 3.4vw, 2.55rem)" }}
         >
           {/* main block */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             {layout.main.map((row, i) => (
-              <div key={i} className={`flex gap-1.5 ${i === 0 ? "mb-2" : ""}`}>
+              <div key={i} className={`flex gap-1 ${i === 0 ? "mb-1.5" : ""}`}>
                 {row.map((item, j) => (
                   <Key
                     key={j}
@@ -267,13 +268,12 @@ export default function KeyboardTester() {
             ))}
           </div>
           {/* nav / arrows */}
-          <div className="flex flex-col gap-1.5">
-            <div className="h-[var(--u)] mb-2" />
+          <div className="flex flex-col gap-1">
             {layout.nav.map((row, i) =>
               row.length === 0 ? (
                 <div key={i} className="h-[var(--u)]" />
               ) : (
-                <div key={i} className="flex gap-1.5">
+                <div key={i} className={`flex gap-1 ${i === 0 ? "mb-1.5" : ""}`}>
                   {row.map((item, j) => (
                     <Key
                       key={j}
@@ -288,10 +288,10 @@ export default function KeyboardTester() {
           </div>
           {/* numpad */}
           {showNumpad && (
-            <div className="flex flex-col gap-1.5">
-              <div className="h-[var(--u)] mb-2" />
+            <div className="flex flex-col gap-1">
+              <div className="h-[var(--u)] mb-1.5" />
               <div
-                className="grid gap-1.5"
+                className="grid gap-1"
                 style={{
                   gridTemplateColumns: "repeat(4, var(--u))",
                   gridAutoRows: "var(--u)",
