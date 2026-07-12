@@ -7,6 +7,8 @@ import AudioTester from "./AudioTester";
 import MouseTester from "./MouseTester";
 import ScreenTester from "./ScreenTester";
 import TouchTester from "./TouchTester";
+import CpuTester from "./CpuTester";
+import GpuTester from "./GpuTester";
 
 // Mounted at "/*" on testers.remker1.dev, or at "/testers/*" on the main site.
 export default function TestersApp() {
@@ -20,6 +22,8 @@ export default function TestersApp() {
         <Route path="mouse" element={<MouseTester />} />
         <Route path="screen" element={<ScreenTester />} />
         <Route path="touch" element={<TouchTester />} />
+        <Route path="cpu" element={<CpuTester />} />
+        <Route path="gpu" element={<GpuTester />} />
         <Route path="*" element={<Navigate to="." replace />} />
       </Routes>
     </TestersLayout>
