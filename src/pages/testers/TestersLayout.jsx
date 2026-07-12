@@ -5,8 +5,11 @@ import { tPath, useT } from "./testersUtils";
 
 const NAV_ITEMS = [
   { path: "/keyboard", key: "keyboard", icon: "⌨️" },
+  { path: "/mouse", key: "mouse", icon: "🖱️" },
   { path: "/webcam", key: "webcam", icon: "📷" },
   { path: "/audio", key: "audio", icon: "🔊" },
+  { path: "/screen", key: "screen", icon: "🖥️" },
+  { path: "/touch", key: "touch", icon: "👆" },
 ];
 
 export function TestersLayout({ children }) {

@@ -4,6 +4,9 @@ import TestersHome from "./TestersHome";
 import KeyboardTester from "./KeyboardTester";
 import WebcamTester from "./WebcamTester";
 import AudioTester from "./AudioTester";
+import MouseTester from "./MouseTester";
+import ScreenTester from "./ScreenTester";
+import TouchTester from "./TouchTester";
 
 // Mounted at "/*" on testers.remker1.dev, or at "/testers/*" on the main site.
 export default function TestersApp() {
@@ -14,6 +17,9 @@ export default function TestersApp() {
         <Route path="keyboard" element={<KeyboardTester />} />
         <Route path="webcam" element={<WebcamTester />} />
         <Route path="audio" element={<AudioTester />} />
+        <Route path="mouse" element={<MouseTester />} />
+        <Route path="screen" element={<ScreenTester />} />
+        <Route path="touch" element={<TouchTester />} />
         <Route path="*" element={<Navigate to="." replace />} />
       </Routes>
     </TestersLayout>
