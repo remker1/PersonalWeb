@@ -141,6 +141,10 @@ export default function KeyboardTester() {
   const [tested, setTested] = useState(() => new Set());
   const [lastEvent, setLastEvent] = useState(null);
   const [history, setHistory] = useState([]);
+  const [maxSimul, setMaxSimul] = useState(0);
+  const [chatter, setChatter] = useState(() => new Map());
+  const lastKeyupRef = useRef({});
+  const pressedRef = useRef(new Set()); // mirror of `pressed` for size tracking in handlers
   const areaRef = useRef(null);
 
   const layout = useMemo(
@@ -161,8 +165,18 @@ export default function KeyboardTester() {
     e.preventDefault();
     if (!e.code && !e.key) return;
     if (e.code) {
-      setPressed((prev) => new Set(prev).add(e.code));
+      pressedRef.current.add(e.code);
+      const size = pressedRef.current.size; // capture now — updaters run after later events mutate the ref
+      setPressed(new Set(pressedRef.current));
+      setMaxSimul((m) => Math.max(m, size));
       setTested((prev) => new Set(prev).add(e.code));
+      // key re-triggering right after release points to switch chatter
+      if (!e.repeat) {
+        const lastUp = lastKeyupRef.current[e.code];
+        if (lastUp != null && performance.now() - lastUp < 35) {
+          setChatter((prev) => new Map(prev).set(e.code, (prev.get(e.code) || 0) + 1));
+        }
+      }
     }
     setLastEvent({ key: e.key, code: e.code, keyCode: e.keyCode, location: e.location });
     if (!e.repeat && e.key) {
@@ -173,18 +187,24 @@ export default function KeyboardTester() {
   const onKeyUp = useCallback((e) => {
     e.preventDefault();
     if (!e.code && !e.key) return;
-    if (e.code) setTested((prev) => new Set(prev).add(e.code)); // PrintScreen only fires keyup on Windows
-    setPressed((prev) => {
-      const next = new Set(prev);
-      next.delete(e.code);
-      // macOS quirk: while ⌘ is held, keyup for other keys is never delivered
-      if (e.key === "Meta") return new Set();
-      return next;
-    });
+    if (e.code) {
+      setTested((prev) => new Set(prev).add(e.code)); // PrintScreen only fires keyup on Windows
+      lastKeyupRef.current[e.code] = performance.now();
+    }
+    // macOS quirk: while ⌘ is held, keyup for other keys is never delivered
+    if (e.key === "Meta") {
+      pressedRef.current = new Set();
+    } else {
+      pressedRef.current.delete(e.code);
+    }
+    setPressed(new Set(pressedRef.current));
   }, []);
 
   useEffect(() => {
-    const clear = () => setPressed(new Set());
+    const clear = () => {
+      pressedRef.current = new Set();
+      setPressed(new Set());
+    };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("blur", clear);
@@ -196,10 +216,14 @@ export default function KeyboardTester() {
   }, [onKeyDown, onKeyUp]);
 
   const reset = () => {
+    pressedRef.current = new Set();
     setPressed(new Set());
     setTested(new Set());
     setLastEvent(null);
     setHistory([]);
+    setMaxSimul(0);
+    setChatter(new Map());
+    lastKeyupRef.current = {};
   };
 
   return (
@@ -321,6 +345,27 @@ export default function KeyboardTester() {
           )}
         </div>
         <p className="text-center text-xs text-text-muted mt-4">{t("kbHint")}</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 text-sm text-text-secondary">
+        <span>
+          {t("kbSimul")}:{" "}
+          <span className="text-accent font-semibold tabular-nums">{pressed.size}</span>
+        </span>
+        <span>
+          {t("kbMaxSimul")}:{" "}
+          <span className="text-accent font-semibold tabular-nums">{maxSimul}</span>
+        </span>
+        <span>
+          {t("kbChatter")}:{" "}
+          {chatter.size === 0 ? (
+            <span className="text-text-muted">{t("kbNone")}</span>
+          ) : (
+            <span className="text-red-500 font-mono">
+              {[...chatter.entries()].map(([code, n]) => `${code} ×${n}`).join(", ")}
+            </span>
+          )}
+        </span>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 mt-6">
