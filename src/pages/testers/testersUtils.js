@@ -180,7 +180,7 @@ const dict = {
     btCheckValues: "The result is unusually high. Check that both values use the same unit and are entered in the correct fields.",
     btFindValues: "Where can I find these values?",
     btDetected: "Detected system:",
-    btStepsWindows: "Run the command in Terminal or CMD, then open the generated battery-report.html. Under “Installed batteries” read DESIGN CAPACITY, FULL CHARGE CAPACITY and CYCLE COUNT — on dual-battery laptops, BATTERY 1 and BATTERY 2 are listed side by side, matching the cards above.",
+    btStepsWindows: "Run the command in Terminal or CMD. It saves battery-report.html in Downloads; the Open battery report button starts there. Under “Installed batteries” read DESIGN CAPACITY, FULL CHARGE CAPACITY and CYCLE COUNT — on dual-battery laptops, BATTERY 1 and BATTERY 2 are listed side by side, matching the cards above.",
     btStepsMac: "Run the command in Terminal: “DesignCapacity” is the design capacity, “AppleRawMaxCapacity” the current full-charge capacity, “CycleCount” the cycle count. (Also visible under  → About This Mac → System Report → Power.)",
     btStepsLinux: "Each battery has its own folder (BAT0, BAT1…): energy_full is the full-charge capacity, energy_full_design the design capacity, cycle_count the cycle count.",
     btDisclaimer: "Web pages cannot directly read design capacity, full-charge capacity or cycle count. This calculator only uses values you provide and does not upload them.",
@@ -197,6 +197,8 @@ const dict = {
     btAutoPlaceholder: "Paste ioreg / powercfg / uevent output here…",
     btAutoOk: "Recognized {n} battery(ies) — values filled in below.",
     btAutoFail: "Couldn't recognize that output. Make sure it comes from one of the commands shown below.",
+    btOpenTerminal: "Open Terminal",
+    btTerminalReady: "Command copied. Press Win+R, type wt, press Enter, then paste the command and run it.",
   },
   zh: {
     siteTitle: "设备测试工具",
@@ -355,7 +357,7 @@ const dict = {
     btCheckValues: "结果异常偏高，请确认两个数值单位相同，并且没有填反。",
     btFindValues: "怎样查找这两个容量？",
     btDetected: "检测到当前系统：",
-    btStepsWindows: "在终端或 CMD 中运行命令，然后打开生成的 battery-report.html。在 Installed batteries 部分查看 DESIGN CAPACITY（设计容量）、FULL CHARGE CAPACITY（满充容量）和 CYCLE COUNT（循环次数）——双电池机型会并排列出 BATTERY 1 和 BATTERY 2，正好对应上方的电池卡片。",
+    btStepsWindows: "在终端或 CMD 中运行命令，battery-report.html 会保存到下载目录；点击“打开 battery-report.html”会默认从这里开始。在 Installed batteries 部分查看 DESIGN CAPACITY（设计容量）、FULL CHARGE CAPACITY（满充容量）和 CYCLE COUNT（循环次数）——双电池机型会并排列出 BATTERY 1 和 BATTERY 2，正好对应上方的电池卡片。",
     btStepsMac: "在终端运行命令：DesignCapacity 为设计容量，AppleRawMaxCapacity 为当前满充容量，CycleCount 为循环次数。（也可在  → 关于本机 → 系统报告 → 电源 中查看。）",
     btStepsLinux: "每块电池一个目录（BAT0、BAT1…）：energy_full 为满充容量，energy_full_design 为设计容量，cycle_count 为循环次数。",
     btDisclaimer: "网页无法直接读取设计容量、满充容量或循环次数。本工具只使用你输入的数据，并且不会上传。",
@@ -372,6 +374,8 @@ const dict = {
     btAutoPlaceholder: "在此粘贴 ioreg / powercfg / uevent 的输出…",
     btAutoOk: "已识别 {n} 块电池，数值已自动填充。",
     btAutoFail: "无法识别该输出，请确认它来自下方给出的命令。",
+    btOpenTerminal: "打开终端",
+    btTerminalReady: "命令已复制。按 Win+R，输入 wt 并回车，然后粘贴命令并执行。",
   },
   fr: {
     siteTitle: "Testeurs d'appareils",
@@ -533,7 +537,7 @@ const dict = {
     btCheckValues: "Le résultat est anormalement élevé. Vérifiez les unités et l'ordre des valeurs.",
     btFindValues: "Où trouver ces valeurs ?",
     btDetected: "Système détecté :",
-    btStepsWindows: "Exécutez la commande dans le Terminal ou CMD, puis ouvrez le fichier battery-report.html généré. Sous « Installed batteries », lisez DESIGN CAPACITY, FULL CHARGE CAPACITY et CYCLE COUNT — sur les portables à deux batteries, BATTERY 1 et BATTERY 2 apparaissent côte à côte, comme les cartes ci-dessus.",
+    btStepsWindows: "Exécutez la commande dans le Terminal ou CMD. Le fichier battery-report.html est enregistré dans Téléchargements et le bouton d'ouverture commence dans ce dossier. Sous « Installed batteries », lisez DESIGN CAPACITY, FULL CHARGE CAPACITY et CYCLE COUNT — sur les portables à deux batteries, BATTERY 1 et BATTERY 2 apparaissent côte à côte, comme les cartes ci-dessus.",
     btStepsMac: "Exécutez la commande dans le Terminal : « DesignCapacity » est la capacité d'origine, « AppleRawMaxCapacity » la capacité actuelle à pleine charge, « CycleCount » le nombre de cycles. (Visible aussi dans  → À propos de ce Mac → Rapport système → Alimentation.)",
     btStepsLinux: "Chaque batterie a son dossier (BAT0, BAT1…) : energy_full est la capacité à pleine charge, energy_full_design la capacité d'origine, cycle_count le nombre de cycles.",
     btDisclaimer: "Une page web ne peut pas lire directement les capacités ni le nombre de cycles. Ce calcul utilise seulement vos valeurs et ne les envoie pas.",
@@ -550,6 +554,8 @@ const dict = {
     btAutoPlaceholder: "Collez ici la sortie de ioreg / powercfg / uevent…",
     btAutoOk: "{n} batterie(s) reconnue(s) — valeurs remplies ci-dessous.",
     btAutoFail: "Sortie non reconnue. Vérifiez qu'elle provient de l'une des commandes ci-dessous.",
+    btOpenTerminal: "Ouvrir le Terminal",
+    btTerminalReady: "Commande copiée. Appuyez sur Win+R, saisissez wt, validez, puis collez et exécutez la commande.",
   },
 };
 
