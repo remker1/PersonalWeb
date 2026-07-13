@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDocTitle, useT } from "./testersUtils";
 
 const STORAGE_KEY = "pw_battery_healths";
@@ -6,7 +6,7 @@ const MAX_BATTERIES = 4;
 const EMPTY_BATTERY = { full: "", design: "", cycles: "" };
 
 const OS_COMMANDS = [
-  { os: "Windows", icon: "🪟", stepsKey: "btStepsWindows", cmd: "powercfg /batteryreport" },
+  { os: "Windows", icon: "🪟", stepsKey: "btStepsWindows", cmd: 'cmd /c powercfg /batteryreport /output "%USERPROFILE%\\Downloads\\battery-report.html"' },
   { os: "macOS", icon: "🍎", stepsKey: "btStepsMac", cmd: "ioreg -rn AppleSmartBattery | grep -iE 'capacity|cycle'" },
   { os: "Linux", icon: "🐧", stepsKey: "btStepsLinux", cmd: "grep -iE 'full|cycle' /sys/class/power_supply/BAT*/uevent" },
 ];
@@ -142,6 +142,8 @@ export default function BatteryTester() {
   const [copied, setCopied] = useState(null);
   const [rawInput, setRawInput] = useState("");
   const [autoStatus, setAutoStatus] = useState(null); // { ok: boolean, n?: number }
+  const [terminalReady, setTerminalReady] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(batteries));
@@ -177,6 +179,33 @@ export default function BatteryTester() {
   const importFile = async (file) => {
     if (!file) return;
     importText(await file.text());
+  };
+
+  const openBatteryReport = async () => {
+    if (typeof window.showOpenFilePicker !== "function") {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        id: "battery-report",
+        startIn: "downloads",
+        multiple: false,
+        types: [
+          {
+            description: "Battery report",
+            accept: {
+              "text/html": [".html", ".htm"],
+              "text/plain": [".txt"],
+            },
+          },
+        ],
+      });
+      importFile(await handle.getFile());
+    } catch (error) {
+      if (error.name !== "AbortError") fileInputRef.current?.click();
+    }
   };
 
   useEffect(() => {
@@ -288,18 +317,23 @@ export default function BatteryTester() {
         >
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm font-medium mr-auto">⚡ {t("btAutoTitle")}</p>
-            <label className="px-3 py-1.5 rounded-full text-sm border border-border text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer">
+            <button
+              type="button"
+              onClick={openBatteryReport}
+              className="px-3 py-1.5 rounded-full text-sm border border-border text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer"
+            >
               {t("btAutoFile")}
-              <input
-                type="file"
-                accept=".html,.htm,.txt"
-                className="hidden"
-                onChange={(e) => {
-                  importFile(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
-            </label>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".html,.htm,.txt"
+              className="hidden"
+              onChange={(e) => {
+                importFile(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
           </div>
           <p className="text-xs text-text-muted mt-1">{t("btAutoHint")}</p>
           <textarea
@@ -414,6 +448,23 @@ export default function BatteryTester() {
             >
               {copied === primaryCmd.cmd ? `✓ ${t("btCopied")}` : `$ ${primaryCmd.cmd}`}
             </button>
+            {primaryCmd.os === "Windows" && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    copyCmd(primaryCmd.cmd);
+                    setTerminalReady(true);
+                  }}
+                  className="mt-3 px-4 py-2 rounded-full text-sm font-medium bg-accent text-bg-primary hover:bg-accent-hover transition-colors"
+                >
+                  &gt;_ {t("btOpenTerminal")}
+                </button>
+                {terminalReady && (
+                  <p className="mt-2 text-sm text-text-secondary">✓ {t("btTerminalReady")}</p>
+                )}
+              </>
+            )}
           </div>
         )}
 
