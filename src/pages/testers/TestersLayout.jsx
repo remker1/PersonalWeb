@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { path: "/touch", key: "touch", icon: "👆" },
   { path: "/cpu", key: "cpu", icon: "⚙️" },
   { path: "/gpu", key: "gpu", icon: "🎮" },
+  { path: "/battery", key: "battery", icon: "🔋" },
 ];
 
 export function TestersLayout({ children }) {

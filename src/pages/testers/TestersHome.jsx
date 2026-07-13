@@ -10,6 +10,7 @@ const CARDS = [
   { path: "/touch", titleKey: "touch", descKey: "touchDesc", icon: "👆" },
   { path: "/cpu", titleKey: "cpu", descKey: "cpuDesc", icon: "⚙️" },
   { path: "/gpu", titleKey: "gpu", descKey: "gpuDesc", icon: "🎮" },
+  { path: "/battery", titleKey: "battery", descKey: "batteryDesc", icon: "🔋" },
 ];
 
 export default function TestersHome() {
