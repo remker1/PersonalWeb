@@ -6,10 +6,18 @@ const MAX_BATTERIES = 4;
 const EMPTY_BATTERY = { full: "", design: "", cycles: "" };
 
 const OS_COMMANDS = [
-  { os: "macOS", hintKey: "btMac", cmd: "ioreg -rn AppleSmartBattery | grep -iE 'capacity|cycle'" },
-  { os: "Windows", hintKey: "btWindows", cmd: "powercfg /batteryreport" },
-  { os: "Linux", hintKey: "btLinux", cmd: "grep -iE 'full|cycle' /sys/class/power_supply/BAT*/uevent" },
+  { os: "Windows", icon: "🪟", stepsKey: "btStepsWindows", cmd: "powercfg /batteryreport" },
+  { os: "macOS", icon: "🍎", stepsKey: "btStepsMac", cmd: "ioreg -rn AppleSmartBattery | grep -iE 'capacity|cycle'" },
+  { os: "Linux", icon: "🐧", stepsKey: "btStepsLinux", cmd: "grep -iE 'full|cycle' /sys/class/power_supply/BAT*/uevent" },
 ];
+
+function detectOs() {
+  const p = `${navigator.platform || ""} ${navigator.userAgent || ""}`;
+  if (/Win/i.test(p)) return "Windows";
+  if (/Mac/i.test(p)) return "macOS";
+  if (/Linux|X11/i.test(p)) return "Linux";
+  return null;
+}
 
 function formatDuration(seconds, t) {
   if (!Number.isFinite(seconds) || seconds <= 0) return "—";
@@ -110,6 +118,9 @@ export default function BatteryTester() {
   }, []);
 
   const healths = useMemo(() => batteries.map(healthOf), [batteries]);
+  const os = useMemo(() => detectOs(), []);
+  const primaryCmd = OS_COMMANDS.find((c) => c.os === os);
+  const otherCmds = OS_COMMANDS.filter((c) => c.os !== os);
   const level = battery ? Math.round(battery.level * 100) : null;
   const remaining = battery?.charging
     ? formatDuration(battery.chargingTime, t)
@@ -248,13 +259,31 @@ export default function BatteryTester() {
 
         <p className="text-sm text-text-muted mt-4">{t("btFormula")}</p>
 
-        <details className="mt-5 border-t border-border pt-4">
+        {primaryCmd && (
+          <div className="mt-5 rounded-xl border border-accent/40 bg-accent/5 p-4">
+            <p className="text-sm">
+              <span className="mr-1.5" aria-hidden>{primaryCmd.icon}</span>
+              <strong>{t("btDetected")} {primaryCmd.os}</strong>
+              <span className="text-text-secondary"> — {t(primaryCmd.stepsKey)}</span>
+            </p>
+            <button
+              onClick={() => copyCmd(primaryCmd.cmd)}
+              className="mt-3 w-full text-left font-mono text-xs px-3 py-2 rounded-lg border border-border bg-bg-primary hover:border-accent/60 transition-colors break-all"
+              title={t("btCopy")}
+            >
+              {copied === primaryCmd.cmd ? `✓ ${t("btCopied")}` : `$ ${primaryCmd.cmd}`}
+            </button>
+          </div>
+        )}
+
+        <details className="mt-4 border-t border-border pt-4">
           <summary className="cursor-pointer text-sm font-medium text-accent">{t("btFindValues")}</summary>
-          <div className="mt-3 grid gap-4 text-sm text-text-muted lg:grid-cols-3">
-            {OS_COMMANDS.map(({ os, hintKey, cmd }) => (
-              <div key={os}>
+          <div className="mt-3 grid gap-4 text-sm text-text-muted lg:grid-cols-2">
+            {(primaryCmd ? otherCmds : OS_COMMANDS).map(({ os: name, icon, stepsKey, cmd }) => (
+              <div key={name}>
                 <p>
-                  <strong className="text-text-secondary">{os}:</strong> {t(hintKey)}
+                  <span className="mr-1" aria-hidden>{icon}</span>
+                  <strong className="text-text-secondary">{name}:</strong> {t(stepsKey)}
                 </p>
                 <button
                   onClick={() => copyCmd(cmd)}
