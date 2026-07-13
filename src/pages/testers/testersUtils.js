@@ -191,6 +191,12 @@ const dict = {
     btCyclesNote: "Typical laptop batteries are rated for roughly 1000 charge cycles (about 500 on older models).",
     btCopy: "Click to copy",
     btCopied: "Copied",
+    btAutoTitle: "Auto-fill from system output",
+    btAutoFile: "Open battery-report.html",
+    btAutoHint: "Paste the command output below — or drop the Windows battery-report.html file anywhere in this box — and every battery's values are filled in automatically. Parsing happens entirely on your device.",
+    btAutoPlaceholder: "Paste ioreg / powercfg / uevent output here…",
+    btAutoOk: "Recognized {n} battery(ies) — values filled in below.",
+    btAutoFail: "Couldn't recognize that output. Make sure it comes from one of the commands shown below.",
   },
   zh: {
     siteTitle: "设备测试工具",
@@ -360,6 +366,12 @@ const dict = {
     btCyclesNote: "笔记本电池的设计循环寿命通常约为 1000 次（较旧机型约 500 次）。",
     btCopy: "点击复制",
     btCopied: "已复制",
+    btAutoTitle: "从系统输出自动填充",
+    btAutoFile: "打开 battery-report.html",
+    btAutoHint: "把命令输出粘贴到下方——或把 Windows 生成的 battery-report.html 文件直接拖进此区域——所有电池的数值会自动识别填充。解析完全在你的设备上进行。",
+    btAutoPlaceholder: "在此粘贴 ioreg / powercfg / uevent 的输出…",
+    btAutoOk: "已识别 {n} 块电池，数值已自动填充。",
+    btAutoFail: "无法识别该输出，请确认它来自下方给出的命令。",
   },
   fr: {
     siteTitle: "Testeurs d'appareils",
@@ -532,6 +544,12 @@ const dict = {
     btCyclesNote: "Les batteries de portables sont généralement conçues pour environ 1000 cycles (500 sur les modèles plus anciens).",
     btCopy: "Cliquer pour copier",
     btCopied: "Copié",
+    btAutoTitle: "Remplissage automatique depuis la sortie système",
+    btAutoFile: "Ouvrir battery-report.html",
+    btAutoHint: "Collez la sortie de la commande ci-dessous — ou déposez le fichier battery-report.html de Windows dans cette zone — et les valeurs de chaque batterie sont remplies automatiquement. L'analyse se fait entièrement sur votre appareil.",
+    btAutoPlaceholder: "Collez ici la sortie de ioreg / powercfg / uevent…",
+    btAutoOk: "{n} batterie(s) reconnue(s) — valeurs remplies ci-dessous.",
+    btAutoFail: "Sortie non reconnue. Vérifiez qu'elle provient de l'une des commandes ci-dessous.",
   },
 };
 

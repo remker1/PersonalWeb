@@ -28,6 +28,82 @@ function formatDuration(seconds, t) {
   return `${minutes}${t("btMinute")}`;
 }
 
+/* ── parsers for system output (all local, nothing uploaded) ── */
+
+// macOS: ioreg -rn AppleSmartBattery
+function parseIoreg(text) {
+  if (!/"DesignCapacity"/.test(text)) return null;
+  const num = (re) => {
+    const m = text.match(re);
+    return m ? Number(m[1]) : null;
+  };
+  const design = num(/"DesignCapacity"\s*=\s*(\d+)/);
+  let full = num(/"AppleRawMaxCapacity"\s*=\s*(\d+)/);
+  const maxCap = num(/"MaxCapacity"\s*=\s*(\d+)/);
+  if (full == null && maxCap != null && maxCap > 200) full = maxCap; // Intel Macs: MaxCapacity is mAh, Apple Silicon: a percentage
+  const cycles = num(/"CycleCount"\s*=\s*(\d+)/);
+  if (!(design > 0) || !(full > 0)) return null;
+  return [{ full: String(full), design: String(design), cycles: cycles != null ? String(cycles) : "" }];
+}
+
+// Linux: /sys/class/power_supply/BAT*/uevent (grep output may prefix each line with the file path)
+function parseUevent(text) {
+  if (!/POWER_SUPPLY_/i.test(text)) return null;
+  const groups = {};
+  for (const line of text.split(/\r?\n/)) {
+    const m = line.match(/(?:(BAT\d+)[^:=]*:)?\s*POWER_SUPPLY_(ENERGY_FULL_DESIGN|ENERGY_FULL|CHARGE_FULL_DESIGN|CHARGE_FULL|CYCLE_COUNT)=(\d+)/i);
+    if (!m) continue;
+    const key = m[1] || "BAT0";
+    (groups[key] ||= {})[m[2].toUpperCase()] = m[3];
+  }
+  const out = Object.keys(groups)
+    .sort()
+    .map((k) => {
+      const g = groups[k];
+      return {
+        full: g.ENERGY_FULL || g.CHARGE_FULL || "",
+        design: g.ENERGY_FULL_DESIGN || g.CHARGE_FULL_DESIGN || "",
+        cycles: g.CYCLE_COUNT || "",
+      };
+    })
+    .filter((b) => b.full && b.design);
+  return out.length ? out : null;
+}
+
+// Windows: battery-report.html from `powercfg /batteryreport` (multi-battery: one column per battery)
+function parsePowercfg(text) {
+  if (!/DESIGN CAPACITY/i.test(text)) return null;
+  const rowValues = (label) => {
+    const doc = new DOMParser().parseFromString(text, "text/html");
+    for (const row of doc.querySelectorAll("tr")) {
+      const cells = [...row.querySelectorAll("th, td")];
+      if (cells.length >= 2 && cells[0].textContent.trim().toUpperCase().startsWith(label)) {
+        return cells.slice(1).map((c) => {
+          const m = c.textContent.replace(/[,\s\u00a0\u202f]/g, "").match(/(\d+)/);
+          return m ? m[1] : "";
+        });
+      }
+    }
+    // plain-text fallback (user copied the rendered report instead of the file)
+    const line = text.match(new RegExp(label + "([^\\n]*)", "i"));
+    return line ? [...line[1].matchAll(/([\d,.\s\u00a0\u202f]{3,})m[WA]h/gi)].map((m) => m[1].replace(/[^\d]/g, "")) : [];
+  };
+  const designs = rowValues("DESIGN CAPACITY");
+  const fulls = rowValues("FULL CHARGE CAPACITY");
+  const cycles = rowValues("CYCLE COUNT");
+  const n = Math.min(designs.length, fulls.length);
+  const out = Array.from({ length: n }, (_, i) => ({
+    full: fulls[i] || "",
+    design: designs[i] || "",
+    cycles: cycles[i] || "",
+  })).filter((b) => Number(b.full) > 0 && Number(b.design) > 0);
+  return out.length ? out : null;
+}
+
+function parseSystemOutput(text) {
+  return parseIoreg(text) || parseUevent(text) || parsePowercfg(text);
+}
+
 function healthOf({ full, design }) {
   const f = Number(full);
   const d = Number(design);
@@ -64,6 +140,8 @@ export default function BatteryTester() {
     return [{ ...EMPTY_BATTERY }];
   });
   const [copied, setCopied] = useState(null);
+  const [rawInput, setRawInput] = useState("");
+  const [autoStatus, setAutoStatus] = useState(null); // { ok: boolean, n?: number }
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(batteries));
@@ -79,6 +157,26 @@ export default function BatteryTester() {
       setCopied(cmd);
       setTimeout(() => setCopied(null), 1500);
     } catch { /* clipboard unavailable */ }
+  };
+
+  const importText = (text) => {
+    setRawInput(text);
+    if (!text.trim()) {
+      setAutoStatus(null);
+      return;
+    }
+    const parsed = parseSystemOutput(text);
+    if (parsed) {
+      setBatteries(parsed.slice(0, MAX_BATTERIES));
+      setAutoStatus({ ok: true, n: Math.min(parsed.length, MAX_BATTERIES) });
+    } else {
+      setAutoStatus({ ok: false });
+    }
+  };
+
+  const importFile = async (file) => {
+    if (!file) return;
+    importText(await file.text());
   };
 
   useEffect(() => {
@@ -175,6 +273,49 @@ export default function BatteryTester() {
             >
               + {t("btAddBattery")}
             </button>
+          )}
+        </div>
+
+        <div
+          className="mt-5 rounded-xl border-2 border-dashed border-border p-4 transition-colors focus-within:border-accent/60"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files?.[0];
+            if (file) importFile(file);
+            else importText(e.dataTransfer.getData("text"));
+          }}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-medium mr-auto">⚡ {t("btAutoTitle")}</p>
+            <label className="px-3 py-1.5 rounded-full text-sm border border-border text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer">
+              {t("btAutoFile")}
+              <input
+                type="file"
+                accept=".html,.htm,.txt"
+                className="hidden"
+                onChange={(e) => {
+                  importFile(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+          <p className="text-xs text-text-muted mt-1">{t("btAutoHint")}</p>
+          <textarea
+            value={rawInput}
+            onChange={(e) => importText(e.target.value)}
+            rows={3}
+            spellCheck={false}
+            placeholder={t("btAutoPlaceholder")}
+            className="mt-3 w-full rounded-lg border border-border bg-bg-primary px-3 py-2 font-mono text-xs text-text-primary outline-none focus:border-accent resize-y"
+          />
+          {autoStatus && (
+            <p className={`text-sm mt-2 ${autoStatus.ok ? "text-green-500" : "text-amber-500"}`}>
+              {autoStatus.ok
+                ? `✓ ${t("btAutoOk").replace("{n}", autoStatus.n)}`
+                : t("btAutoFail")}
+            </p>
           )}
         </div>
 
