@@ -48,6 +48,35 @@ const ROW_4 = [
   k("Shift", "ShiftRight", 2.75),
 ];
 
+const ROW_1_CA_FR = [
+  k("#", "Backquote", 1, "|"), k("1", "Digit1", 1, "!"), k("2", "Digit2", 1, '"'),
+  k("3", "Digit3", 1, "/"), k("4", "Digit4", 1, "$"), k("5", "Digit5", 1, "%"),
+  k("6", "Digit6", 1, "?"), k("7", "Digit7", 1, "&"), k("8", "Digit8", 1, "*"),
+  k("9", "Digit9", 1, "("), k("0", "Digit0", 1, ")"), k("-", "Minus", 1, "_"),
+  k("=", "Equal", 1, "+"), k("⌫ Bksp", "Backspace", 2),
+];
+
+const ROW_2_CA_FR = [
+  k("Tab", "Tab", 1.5), k("Q", "KeyQ"), k("W", "KeyW"), k("E", "KeyE"), k("R", "KeyR"),
+  k("T", "KeyT"), k("Y", "KeyY"), k("U", "KeyU"), k("I", "KeyI"), k("O", "KeyO"),
+  k("P", "KeyP"), k("^", "BracketLeft", 1, "¨"), k("ç", "BracketRight", 1, "Ç"),
+  k("à", "Backslash", 1.5, "À"),
+];
+
+const ROW_3_CA_FR = [
+  k("Caps", "CapsLock", 1.75), k("A", "KeyA"), k("S", "KeyS"), k("D", "KeyD"),
+  k("F", "KeyF"), k("G", "KeyG"), k("H", "KeyH"), k("J", "KeyJ"), k("K", "KeyK"),
+  k("L", "KeyL"), k(";", "Semicolon", 1, ":"), k("è", "Quote", 1, "È"),
+  k("Enter", "Enter", 2.25),
+];
+
+const ROW_4_CA_FR = [
+  k("Shift", "ShiftLeft", 1.25), k("ù", "IntlBackslash", 1, "Ù"),
+  k("Z", "KeyZ"), k("X", "KeyX"), k("C", "KeyC"), k("V", "KeyV"), k("B", "KeyB"),
+  k("N", "KeyN"), k("M", "KeyM"), k(",", "Comma", 1, "'"), k(".", "Period", 1, '"'),
+  k("é", "Slash", 1, "É"), k("Shift", "ShiftRight", 2.75),
+];
+
 const ROW_5_WIN = [
   k("Ctrl", "ControlLeft", 1.25), k("Win", "MetaLeft", 1.25), k("Alt", "AltLeft", 1.25),
   k("Space", "Space", 6.25),
@@ -148,10 +177,15 @@ export default function KeyboardTester() {
   const areaRef = useRef(null);
 
   const layout = useMemo(
-    () =>
-      layoutName === "mac"
-        ? { fnRow: FN_ROW_MAC, main: [FN_ROW_MAC, ROW_1("⌫"), ROW_2("\\"), ROW_3("return"), ROW_4, ROW_5_MAC], nav: NAV_ROWS_MAC }
-        : { fnRow: FN_ROW_WIN, main: [FN_ROW_WIN, ROW_1("⌫ Bksp"), ROW_2("\\"), ROW_3("Enter"), ROW_4, ROW_5_WIN], nav: NAV_ROWS },
+    () => {
+      if (layoutName === "mac") {
+        return { fnRow: FN_ROW_MAC, main: [FN_ROW_MAC, ROW_1("⌫"), ROW_2("\\"), ROW_3("return"), ROW_4, ROW_5_MAC], nav: NAV_ROWS_MAC };
+      }
+      if (layoutName === "frca") {
+        return { fnRow: FN_ROW_WIN, main: [FN_ROW_WIN, ROW_1_CA_FR, ROW_2_CA_FR, ROW_3_CA_FR, ROW_4_CA_FR, ROW_5_WIN], nav: NAV_ROWS };
+      }
+      return { fnRow: FN_ROW_WIN, main: [FN_ROW_WIN, ROW_1("⌫ Bksp"), ROW_2("\\"), ROW_3("Enter"), ROW_4, ROW_5_WIN], nav: NAV_ROWS };
+    },
     [layoutName]
   );
 
@@ -231,7 +265,7 @@ export default function KeyboardTester() {
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold mr-auto">⌨️ {t("keyboard")}</h1>
         <div className="flex items-center gap-1 rounded-full border border-border p-1 bg-bg-card">
-          {["win", "mac"].map((name) => (
+          {["win", "mac", "frca"].map((name) => (
             <button
               key={name}
               onClick={() => setLayoutName(name)}
@@ -241,7 +275,7 @@ export default function KeyboardTester() {
                   : "text-text-secondary hover:bg-bg-secondary"
               }`}
             >
-              {name === "win" ? t("kbWin") : t("kbMac")}
+              {name === "win" ? t("kbWin") : name === "mac" ? t("kbMac") : t("kbCaFr")}
             </button>
           ))}
         </div>

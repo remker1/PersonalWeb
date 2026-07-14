@@ -3,7 +3,7 @@ import { tPath, useT, useDocTitle } from "./testersUtils";
 
 const CARDS = [
   { path: "/keyboard", titleKey: "keyboard", descKey: "keyboardDesc", icon: "⌨️" },
-  { path: "/mouse", titleKey: "mouse", descKey: "mouseDesc", icon: "🖱️" },
+  { path: "/trackpad", titleKey: "mouse", descKey: "mouseDesc", icon: "🖐️" },
   { path: "/webcam", titleKey: "webcam", descKey: "webcamDesc", icon: "📷" },
   { path: "/audio", titleKey: "audio", descKey: "audioDesc", icon: "🔊" },
   { path: "/screen", titleKey: "screen", descKey: "screenDesc", icon: "🖥️" },

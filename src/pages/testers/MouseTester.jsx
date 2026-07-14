@@ -3,13 +3,10 @@ import { useT, useDocTitle } from "./testersUtils";
 
 const BUTTONS = [
   { id: 0, key: "msLeft" },
-  { id: 1, key: "msMiddle" },
   { id: 2, key: "msRight" },
-  { id: 3, key: "msBack" },
-  { id: 4, key: "msForward" },
 ];
 
-export default function MouseTester() {
+export default function TrackpadTester() {
   const t = useT();
   useDocTitle(t("mouse"));
 
@@ -18,6 +15,7 @@ export default function MouseTester() {
   const [dblInterval, setDblInterval] = useState(null);
   const [dblCount, setDblCount] = useState(0);
   const [wheel, setWheel] = useState({ up: 0, down: 0, left: 0, right: 0 });
+  const [pinch, setPinch] = useState({ in: 0, out: 0 });
   const [hz, setHz] = useState(0);
   const [maxHz, setMaxHz] = useState(0);
 
@@ -56,6 +54,13 @@ export default function MouseTester() {
     if (!el) return;
     const onWheel = (e) => {
       e.preventDefault();
+      if (e.ctrlKey) {
+        setPinch((value) => ({
+          in: value.in + (e.deltaY > 0 ? 1 : 0),
+          out: value.out + (e.deltaY < 0 ? 1 : 0),
+        }));
+        return;
+      }
       setWheel((w) => ({
         up: w.up + (e.deltaY < 0 ? 1 : 0),
         down: w.down + (e.deltaY > 0 ? 1 : 0),
@@ -127,13 +132,14 @@ export default function MouseTester() {
     setDblInterval(null);
     setDblCount(0);
     setWheel({ up: 0, down: 0, left: 0, right: 0 });
+    setPinch({ in: 0, out: 0 });
     clearTrail();
   };
 
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <h1 className="text-2xl font-bold mr-auto">🖱️ {t("mouse")}</h1>
+        <h1 className="text-2xl font-bold mr-auto">🖐️ {t("mouse")}</h1>
         <button
           onClick={reset}
           className="px-3 py-1.5 rounded-full text-sm border border-border text-text-secondary hover:bg-bg-secondary transition-colors"
@@ -143,7 +149,6 @@ export default function MouseTester() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {/* buttons */}
         <div
           className="rounded-2xl border border-border bg-bg-card p-5 select-none"
           onPointerDown={onButtonDown}
@@ -173,7 +178,6 @@ export default function MouseTester() {
           </div>
         </div>
 
-        {/* double click */}
         <div className="rounded-2xl border border-border bg-bg-card p-5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-1">
             {t("msDbl")}
@@ -195,7 +199,6 @@ export default function MouseTester() {
           </div>
         </div>
 
-        {/* wheel */}
         <div className="rounded-2xl border border-border bg-bg-card p-5">
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-1">
             {t("msWheel")}
@@ -203,25 +206,27 @@ export default function MouseTester() {
           <p className="text-xs text-text-muted mb-4">{t("msWheelHint")}</p>
           <div
             ref={wheelRef}
-            className="rounded-xl border-2 border-dashed border-border h-24 grid grid-cols-4 items-center text-center select-none"
+            className="rounded-xl border-2 border-dashed border-border min-h-24 grid grid-cols-3 sm:grid-cols-6 items-center text-center select-none"
           >
             {[
               ["↑", wheel.up],
               ["↓", wheel.down],
               ["←", wheel.left],
               ["→", wheel.right],
-            ].map(([arrow, count]) => (
-              <div key={arrow}>
+              ["−", pinch.in, t("tpPinchIn")],
+              ["+", pinch.out, t("tpPinchOut")],
+            ].map(([arrow, count, label]) => (
+              <div key={`${arrow}-${label || "scroll"}`} className="py-3">
                 <div className={`text-xl ${count > 0 ? "text-accent" : "text-text-muted"}`}>
                   {arrow}
                 </div>
                 <div className="font-mono text-sm tabular-nums">{count}</div>
+                {label && <div className="text-[10px] text-text-muted mt-0.5">{label}</div>}
               </div>
             ))}
           </div>
         </div>
 
-        {/* movement / polling */}
         <div className="rounded-2xl border border-border bg-bg-card p-5">
           <div className="flex items-baseline justify-between mb-1">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide">
@@ -242,6 +247,7 @@ export default function MouseTester() {
           </div>
         </div>
       </div>
+      <p className="text-xs text-text-muted mt-6">💡 {t("tpDisclaimer")}</p>
     </div>
   );
 }
