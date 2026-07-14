@@ -148,7 +148,6 @@ export default function BatteryTester() {
   const [copied, setCopied] = useState(null);
   const [rawInput, setRawInput] = useState("");
   const [autoStatus, setAutoStatus] = useState(null); // { ok: boolean, n?: number }
-  const [terminalReady, setTerminalReady] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -327,21 +326,16 @@ export default function BatteryTester() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                copyCmd(primaryCmd.cmd);
-                setTerminalReady(true);
-              }}
+              onClick={() => copyCmd(primaryCmd.cmd)}
               className="mt-3 px-4 py-2 rounded-full text-sm font-medium bg-accent text-bg-primary hover:bg-accent-hover transition-colors"
             >
-              &gt;_ {t("btOpenTerminal")}
+              {copied === primaryCmd.cmd ? `✓ ${t("btCopied")}` : t("btCopy")}
             </button>
-            {terminalReady && (
-              <ol className="mt-3 space-y-2 pl-5 text-sm text-text-secondary list-decimal">
-                {TERMINAL_GUIDE_KEYS[primaryCmd.os].map((key) => (
-                  <li key={key}>{t(key)}</li>
-                ))}
-              </ol>
-            )}
+            <ol className="mt-3 space-y-2 pl-5 text-sm text-text-secondary list-decimal">
+              {TERMINAL_GUIDE_KEYS[primaryCmd.os].map((key) => (
+                <li key={key}>{t(key)}</li>
+              ))}
+            </ol>
           </div>
         )}
 
