@@ -11,6 +11,12 @@ const OS_COMMANDS = [
   { os: "Linux", icon: "🐧", stepsKey: "btStepsLinux", cmd: "grep -iE 'full|cycle' /sys/class/power_supply/BAT*/uevent" },
 ];
 
+const TERMINAL_HINT_KEYS = {
+  Windows: "btTerminalReadyWindows",
+  macOS: "btTerminalReadyMac",
+  Linux: "btTerminalReadyLinux",
+};
+
 function detectOs() {
   const p = `${navigator.platform || ""} ${navigator.userAgent || ""}`;
   if (/Win/i.test(p)) return "Windows";
@@ -448,22 +454,20 @@ export default function BatteryTester() {
             >
               {copied === primaryCmd.cmd ? `✓ ${t("btCopied")}` : `$ ${primaryCmd.cmd}`}
             </button>
-            {primaryCmd.os === "Windows" && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    copyCmd(primaryCmd.cmd);
-                    setTerminalReady(true);
-                  }}
-                  className="mt-3 px-4 py-2 rounded-full text-sm font-medium bg-accent text-bg-primary hover:bg-accent-hover transition-colors"
-                >
-                  &gt;_ {t("btOpenTerminal")}
-                </button>
-                {terminalReady && (
-                  <p className="mt-2 text-sm text-text-secondary">✓ {t("btTerminalReady")}</p>
-                )}
-              </>
+            <button
+              type="button"
+              onClick={() => {
+                copyCmd(primaryCmd.cmd);
+                setTerminalReady(true);
+              }}
+              className="mt-3 px-4 py-2 rounded-full text-sm font-medium bg-accent text-bg-primary hover:bg-accent-hover transition-colors"
+            >
+              &gt;_ {t("btOpenTerminal")}
+            </button>
+            {terminalReady && (
+              <p className="mt-2 text-sm text-text-secondary">
+                ✓ {t(TERMINAL_HINT_KEYS[primaryCmd.os])}
+              </p>
             )}
           </div>
         )}
