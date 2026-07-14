@@ -8,8 +8,6 @@ const CARDS = [
   { path: "/audio", titleKey: "audio", descKey: "audioDesc", icon: "🔊" },
   { path: "/screen", titleKey: "screen", descKey: "screenDesc", icon: "🖥️" },
   { path: "/touch", titleKey: "touch", descKey: "touchDesc", icon: "👆" },
-  { path: "/cpu", titleKey: "cpu", descKey: "cpuDesc", icon: "⚙️" },
-  { path: "/gpu", titleKey: "gpu", descKey: "gpuDesc", icon: "🎮" },
   { path: "/battery", titleKey: "battery", descKey: "batteryDesc", icon: "🔋" },
 ];
 

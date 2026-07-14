@@ -10,8 +10,6 @@ const NAV_ITEMS = [
   { path: "/audio", key: "audio", icon: "🔊" },
   { path: "/screen", key: "screen", icon: "🖥️" },
   { path: "/touch", key: "touch", icon: "👆" },
-  { path: "/cpu", key: "cpu", icon: "⚙️" },
-  { path: "/gpu", key: "gpu", icon: "🎮" },
   { path: "/battery", key: "battery", icon: "🔋" },
 ];
 
