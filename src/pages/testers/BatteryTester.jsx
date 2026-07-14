@@ -355,13 +355,15 @@ export default function BatteryTester() {
         >
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm font-medium mr-auto">⚡ {t("btAutoTitle")}</p>
-            <button
-              type="button"
-              onClick={openBatteryReport}
-              className="px-3 py-1.5 rounded-full text-sm border border-border text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer"
-            >
-              {t("btAutoFile")}
-            </button>
+            {os === "Windows" && (
+              <button
+                type="button"
+                onClick={openBatteryReport}
+                className="px-3 py-1.5 rounded-full text-sm border border-border text-text-secondary hover:bg-bg-secondary transition-colors cursor-pointer"
+              >
+                {t("btAutoFile")}
+              </button>
+            )}
             <input
               ref={fileInputRef}
               type="file"

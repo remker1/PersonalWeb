@@ -7,8 +7,6 @@ import AudioTester from "./AudioTester";
 import TrackpadTester from "./MouseTester";
 import ScreenTester from "./ScreenTester";
 import TouchTester from "./TouchTester";
-import CpuTester from "./CpuTester";
-import GpuTester from "./GpuTester";
 import BatteryTester from "./BatteryTester";
 import { tPath } from "./testersUtils";
 
@@ -25,8 +23,6 @@ export default function TestersApp() {
         <Route path="mouse" element={<Navigate to={tPath("/trackpad")} replace />} />
         <Route path="screen" element={<ScreenTester />} />
         <Route path="touch" element={<TouchTester />} />
-        <Route path="cpu" element={<CpuTester />} />
-        <Route path="gpu" element={<GpuTester />} />
         <Route path="battery" element={<BatteryTester />} />
         <Route path="*" element={<Navigate to="." replace />} />
       </Routes>
