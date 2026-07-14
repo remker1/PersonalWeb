@@ -311,6 +311,38 @@ export default function BatteryTester() {
           )}
         </div>
 
+        {primaryCmd && (
+          <div className="mt-5 rounded-xl border border-accent/40 bg-accent/5 p-4">
+            <p className="text-sm">
+              <span className="mr-1.5" aria-hidden>{primaryCmd.icon}</span>
+              <strong>{t("btDetected")} {primaryCmd.os}</strong>
+              <span className="text-text-secondary"> — {t(primaryCmd.stepsKey)}</span>
+            </p>
+            <button
+              onClick={() => copyCmd(primaryCmd.cmd)}
+              className="mt-3 w-full text-left font-mono text-xs px-3 py-2 rounded-lg border border-border bg-bg-primary hover:border-accent/60 transition-colors break-all"
+              title={t("btCopy")}
+            >
+              {copied === primaryCmd.cmd ? `✓ ${t("btCopied")}` : `$ ${primaryCmd.cmd}`}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                copyCmd(primaryCmd.cmd);
+                setTerminalReady(true);
+              }}
+              className="mt-3 px-4 py-2 rounded-full text-sm font-medium bg-accent text-bg-primary hover:bg-accent-hover transition-colors"
+            >
+              &gt;_ {t("btOpenTerminal")}
+            </button>
+            {terminalReady && (
+              <p className="mt-2 text-sm text-text-secondary">
+                ✓ {t(TERMINAL_HINT_KEYS[primaryCmd.os])}
+              </p>
+            )}
+          </div>
+        )}
+
         <div
           className="mt-5 rounded-xl border-2 border-dashed border-border p-4 transition-colors focus-within:border-accent/60"
           onDragOver={(e) => e.preventDefault()}
@@ -439,38 +471,6 @@ export default function BatteryTester() {
         </div>
 
         <p className="text-sm text-text-muted mt-4">{t("btFormula")}</p>
-
-        {primaryCmd && (
-          <div className="mt-5 rounded-xl border border-accent/40 bg-accent/5 p-4">
-            <p className="text-sm">
-              <span className="mr-1.5" aria-hidden>{primaryCmd.icon}</span>
-              <strong>{t("btDetected")} {primaryCmd.os}</strong>
-              <span className="text-text-secondary"> — {t(primaryCmd.stepsKey)}</span>
-            </p>
-            <button
-              onClick={() => copyCmd(primaryCmd.cmd)}
-              className="mt-3 w-full text-left font-mono text-xs px-3 py-2 rounded-lg border border-border bg-bg-primary hover:border-accent/60 transition-colors break-all"
-              title={t("btCopy")}
-            >
-              {copied === primaryCmd.cmd ? `✓ ${t("btCopied")}` : `$ ${primaryCmd.cmd}`}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                copyCmd(primaryCmd.cmd);
-                setTerminalReady(true);
-              }}
-              className="mt-3 px-4 py-2 rounded-full text-sm font-medium bg-accent text-bg-primary hover:bg-accent-hover transition-colors"
-            >
-              &gt;_ {t("btOpenTerminal")}
-            </button>
-            {terminalReady && (
-              <p className="mt-2 text-sm text-text-secondary">
-                ✓ {t(TERMINAL_HINT_KEYS[primaryCmd.os])}
-              </p>
-            )}
-          </div>
-        )}
 
         <details className="mt-4 border-t border-border pt-4">
           <summary className="cursor-pointer text-sm font-medium text-accent">{t("btFindValues")}</summary>
