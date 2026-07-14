@@ -48,12 +48,12 @@ const ROW_4 = [
   k("Shift", "ShiftRight", 2.75),
 ];
 
-const ROW_1_CA_FR = [
+const ROW_1_CA_FR = (backspaceLabel) => [
   k("#", "Backquote", 1, "|"), k("1", "Digit1", 1, "!"), k("2", "Digit2", 1, '"'),
   k("3", "Digit3", 1, "/"), k("4", "Digit4", 1, "$"), k("5", "Digit5", 1, "%"),
   k("6", "Digit6", 1, "?"), k("7", "Digit7", 1, "&"), k("8", "Digit8", 1, "*"),
   k("9", "Digit9", 1, "("), k("0", "Digit0", 1, ")"), k("-", "Minus", 1, "_"),
-  k("=", "Equal", 1, "+"), k("⌫ Bksp", "Backspace", 2),
+  k("=", "Equal", 1, "+"), k(backspaceLabel, "Backspace", 2),
 ];
 
 const ROW_2_CA_FR = [
@@ -63,11 +63,11 @@ const ROW_2_CA_FR = [
   k("à", "Backslash", 1.5, "À"),
 ];
 
-const ROW_3_CA_FR = [
+const ROW_3_CA_FR = (enterLabel) => [
   k("Caps", "CapsLock", 1.75), k("A", "KeyA"), k("S", "KeyS"), k("D", "KeyD"),
   k("F", "KeyF"), k("G", "KeyG"), k("H", "KeyH"), k("J", "KeyJ"), k("K", "KeyK"),
   k("L", "KeyL"), k(";", "Semicolon", 1, ":"), k("è", "Quote", 1, "È"),
-  k("Enter", "Enter", 2.25),
+  k(enterLabel, "Enter", 2.25),
 ];
 
 const ROW_4_CA_FR = [
@@ -164,7 +164,8 @@ export default function KeyboardTester() {
   const t = useT();
   useDocTitle(t("keyboard"));
 
-  const [layoutName, setLayoutName] = useState(IS_MAC ? "mac" : "win");
+  const [layoutName, setLayoutName] = useState("us");
+  const [platformName, setPlatformName] = useState(IS_MAC ? "mac" : "win");
   const [showNumpad, setShowNumpad] = useState(true);
   const [pressed, setPressed] = useState(() => new Set());
   const [tested, setTested] = useState(() => new Set());
@@ -178,15 +179,19 @@ export default function KeyboardTester() {
 
   const layout = useMemo(
     () => {
-      if (layoutName === "mac") {
-        return { fnRow: FN_ROW_MAC, main: [FN_ROW_MAC, ROW_1("⌫"), ROW_2("\\"), ROW_3("return"), ROW_4, ROW_5_MAC], nav: NAV_ROWS_MAC };
-      }
-      if (layoutName === "frca") {
-        return { fnRow: FN_ROW_WIN, main: [FN_ROW_WIN, ROW_1_CA_FR, ROW_2_CA_FR, ROW_3_CA_FR, ROW_4_CA_FR, ROW_5_WIN], nav: NAV_ROWS };
-      }
-      return { fnRow: FN_ROW_WIN, main: [FN_ROW_WIN, ROW_1("⌫ Bksp"), ROW_2("\\"), ROW_3("Enter"), ROW_4, ROW_5_WIN], nav: NAV_ROWS };
+      const isMac = platformName === "mac";
+      const fnRow = isMac ? FN_ROW_MAC : FN_ROW_WIN;
+      const nav = isMac ? NAV_ROWS_MAC : NAV_ROWS;
+      const modifierRow = isMac ? ROW_5_MAC : ROW_5_WIN;
+      const backspaceLabel = isMac ? "⌫" : "⌫ Bksp";
+      const enterLabel = isMac ? "return" : "Enter";
+      const characterRows = layoutName === "frca"
+        ? [ROW_1_CA_FR(backspaceLabel), ROW_2_CA_FR, ROW_3_CA_FR(enterLabel), ROW_4_CA_FR]
+        : [ROW_1(backspaceLabel), ROW_2("\\"), ROW_3(enterLabel), ROW_4];
+
+      return { fnRow, main: [fnRow, ...characterRows, modifierRow], nav };
     },
-    [layoutName]
+    [layoutName, platformName]
   );
 
   const layoutCodes = useMemo(() => collectCodes(layout, showNumpad), [layout, showNumpad]);
@@ -264,20 +269,41 @@ export default function KeyboardTester() {
     <div>
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <h1 className="text-2xl font-bold mr-auto">⌨️ {t("keyboard")}</h1>
-        <div className="flex items-center gap-1 rounded-full border border-border p-1 bg-bg-card">
-          {["win", "mac", "frca"].map((name) => (
-            <button
-              key={name}
-              onClick={() => setLayoutName(name)}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                layoutName === name
-                  ? "bg-accent text-bg-primary font-medium"
-                  : "text-text-secondary hover:bg-bg-secondary"
-              }`}
-            >
-              {name === "win" ? t("kbWin") : name === "mac" ? t("kbMac") : t("kbCaFr")}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-text-muted">{t("kbLayout")}</span>
+          <div className="flex items-center gap-1 rounded-full border border-border p-1 bg-bg-card">
+            {["us", "frca"].map((name) => (
+              <button
+                key={name}
+                onClick={() => setLayoutName(name)}
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  layoutName === name
+                    ? "bg-accent text-bg-primary font-medium"
+                    : "text-text-secondary hover:bg-bg-secondary"
+                }`}
+              >
+                {name === "us" ? t("kbUs") : t("kbCaFr")}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-text-muted">{t("kbPlatform")}</span>
+          <div className="flex items-center gap-1 rounded-full border border-border p-1 bg-bg-card">
+            {["win", "mac"].map((name) => (
+              <button
+                key={name}
+                onClick={() => setPlatformName(name)}
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  platformName === name
+                    ? "bg-accent text-bg-primary font-medium"
+                    : "text-text-secondary hover:bg-bg-secondary"
+                }`}
+              >
+                {name === "win" ? t("kbWin") : t("kbMac")}
+              </button>
+            ))}
+          </div>
         </div>
         <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
           <input
