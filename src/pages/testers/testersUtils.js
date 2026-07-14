@@ -198,7 +198,9 @@ const dict = {
     btAutoOk: "Recognized {n} battery(ies) — values filled in below.",
     btAutoFail: "Couldn't recognize that output. Make sure it comes from one of the commands shown below.",
     btOpenTerminal: "Open Terminal",
-    btTerminalReady: "Command copied. Press Win+R, type wt, press Enter, then paste the command and run it.",
+    btTerminalReadyWindows: "Command copied. Press Win+R, type wt, press Enter, then paste the command and run it.",
+    btTerminalReadyMac: "Command copied. Press Command+Space, type Terminal, press Return, then paste the command and run it.",
+    btTerminalReadyLinux: "Command copied. Press Ctrl+Alt+T, then paste the command and run it.",
   },
   zh: {
     siteTitle: "设备测试工具",
@@ -375,7 +377,9 @@ const dict = {
     btAutoOk: "已识别 {n} 块电池，数值已自动填充。",
     btAutoFail: "无法识别该输出，请确认它来自下方给出的命令。",
     btOpenTerminal: "打开终端",
-    btTerminalReady: "命令已复制。按 Win+R，输入 wt 并回车，然后粘贴命令并执行。",
+    btTerminalReadyWindows: "命令已复制。按 Win+R，输入 wt 并回车，然后粘贴命令并执行。",
+    btTerminalReadyMac: "命令已复制。按 Command+空格，输入 Terminal 并回车，然后粘贴命令并执行。",
+    btTerminalReadyLinux: "命令已复制。按 Ctrl+Alt+T，然后粘贴命令并执行。",
   },
   fr: {
     siteTitle: "Testeurs d'appareils",
@@ -555,7 +559,9 @@ const dict = {
     btAutoOk: "{n} batterie(s) reconnue(s) — valeurs remplies ci-dessous.",
     btAutoFail: "Sortie non reconnue. Vérifiez qu'elle provient de l'une des commandes ci-dessous.",
     btOpenTerminal: "Ouvrir le Terminal",
-    btTerminalReady: "Commande copiée. Appuyez sur Win+R, saisissez wt, validez, puis collez et exécutez la commande.",
+    btTerminalReadyWindows: "Commande copiée. Appuyez sur Win+R, saisissez wt, validez, puis collez et exécutez la commande.",
+    btTerminalReadyMac: "Commande copiée. Appuyez sur Commande+Espace, saisissez Terminal, validez, puis collez et exécutez la commande.",
+    btTerminalReadyLinux: "Commande copiée. Appuyez sur Ctrl+Alt+T, puis collez et exécutez la commande.",
   },
 };
 
