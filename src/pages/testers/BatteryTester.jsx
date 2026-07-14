@@ -11,10 +11,10 @@ const OS_COMMANDS = [
   { os: "Linux", icon: "🐧", stepsKey: "btStepsLinux", cmd: "grep -iE 'full|cycle' /sys/class/power_supply/BAT*/uevent" },
 ];
 
-const TERMINAL_HINT_KEYS = {
-  Windows: "btTerminalReadyWindows",
-  macOS: "btTerminalReadyMac",
-  Linux: "btTerminalReadyLinux",
+const TERMINAL_GUIDE_KEYS = {
+  Windows: ["btTerminalReadyWindows", "btTerminalReportWindows"],
+  macOS: ["btTerminalReadyMac", "btTerminalCopyMac", "btBrowserPasteMac"],
+  Linux: ["btTerminalReadyLinux", "btTerminalCopyLinux", "btBrowserPasteLinux"],
 };
 
 function detectOs() {
@@ -336,9 +336,11 @@ export default function BatteryTester() {
               &gt;_ {t("btOpenTerminal")}
             </button>
             {terminalReady && (
-              <p className="mt-2 text-sm text-text-secondary">
-                ✓ {t(TERMINAL_HINT_KEYS[primaryCmd.os])}
-              </p>
+              <ol className="mt-3 space-y-2 pl-5 text-sm text-text-secondary list-decimal">
+                {TERMINAL_GUIDE_KEYS[primaryCmd.os].map((key) => (
+                  <li key={key}>{t(key)}</li>
+                ))}
+              </ol>
             )}
           </div>
         )}
