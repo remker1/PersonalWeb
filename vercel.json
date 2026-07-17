@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/posts/:slug", "destination": "/api/posts?slug=:slug" },
+    { "source": "/api/network-test", "destination": "/api/system/stats?networkTest=1" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
