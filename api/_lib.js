@@ -104,3 +104,37 @@ export async function sendDiscordNotification(entry) {
     /* non-fatal */
   }
 }
+
+/** Send a non-fatal Discord notification after an admin content update succeeds. */
+export async function sendSiteUpdateNotification({ action, section, title, details }) {
+  const webhookUrl = process.env.DISCORD_SERVERINFO_WEBHOOK_URL || "";
+  if (!webhookUrl) return;
+
+  const fields = [
+    { name: "Section", value: section, inline: true },
+    { name: "Action", value: action, inline: true },
+  ];
+  if (title) fields.push({ name: "Item", value: String(title).slice(0, 1024) });
+  if (details) fields.push({ name: "Details", value: String(details).slice(0, 1024) });
+
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "Personal Website Updates",
+        embeds: [
+          {
+            title: "Website content updated",
+            url: "https://testers.remker1.dev",
+            color: 0x57f287,
+            fields,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }),
+    });
+  } catch {
+    /* notifications must never block a successful content update */
+  }
+}
