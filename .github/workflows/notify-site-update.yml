@@ -1,0 +1,75 @@
+name: Notify website update
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Wait for production bundle
+        id: deployment
+        shell: bash
+        run: |
+          expected_asset="$(find dist/assets -maxdepth 1 -name 'index-*.js' -printf '%f\n' | head -n 1)"
+          for attempt in {1..30}; do
+            live_asset="$(curl -fsS https://testers.remker1.dev | grep -oE '/assets/index-[^\" ]+\.js' | head -n 1 | xargs basename 2>/dev/null || true)"
+            if [ "$live_asset" = "$expected_asset" ]; then
+              echo "live=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "live=false" >> "$GITHUB_OUTPUT"
+
+      - name: Send ServerInfo notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_SERVERINFO_WEBHOOK_URL }}
+          DEPLOYMENT_LIVE: ${{ steps.deployment.outputs.live }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name }}
+        run: |
+          node <<'NODE'
+          const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+          if (!webhookUrl) process.exit(0);
+
+          const live = process.env.DEPLOYMENT_LIVE === "true";
+          const payload = {
+            username: "Personal Website Updates",
+            embeds: [{
+              title: live ? "Website update is live" : "Website update pushed",
+              url: "https://testers.remker1.dev",
+              color: live ? 0x57f287 : 0xfee75c,
+              fields: [
+                { name: "Change", value: (process.env.COMMIT_MESSAGE || "No commit message").slice(0, 1024) },
+                { name: "Author", value: process.env.COMMIT_AUTHOR || "Unknown", inline: true },
+                { name: "Status", value: live ? "Production verified" : "Production verification timed out", inline: true },
+                { name: "Commit", value: `[View on GitHub](${process.env.COMMIT_URL})` },
+              ],
+              timestamp: new Date().toISOString(),
+            }],
+          };
+
+          const response = await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) throw new Error(`Discord returned ${response.status}`);
+          NODE

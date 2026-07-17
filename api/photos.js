@@ -8,6 +8,7 @@ import {
   isAdmin,
   uploadImageToSupabase,
   deleteImageFromSupabase,
+  sendSiteUpdateNotification,
 } from "./_lib.js";
 
 export const config = {
@@ -47,6 +48,7 @@ export default async function handler(req, res) {
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
+    await sendSiteUpdateNotification({ action: "Added", section: "Photo", title: data.alt || `ID ${data.id}` });
     return res.status(201).json(data);
   }
 
@@ -83,6 +85,11 @@ export default async function handler(req, res) {
       .from("photos")
       .select("*")
       .order("id", { ascending: true });
+    await sendSiteUpdateNotification({
+      action: "Reordered or replaced",
+      section: "Photos",
+      details: `${items.length} item(s) saved`,
+    });
     return res.json({ items: data ?? [] });
   }
 

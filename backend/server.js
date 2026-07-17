@@ -75,6 +75,23 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use("/uploads", express.static(UPLOADS_DIR));
 
+app.get("/api/network-test", (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  const requestedBytes = Number.parseInt(req.query.bytes || "0", 10);
+  const bytes = Number.isFinite(requestedBytes) ? Math.min(Math.max(requestedBytes, 0), 2_000_000) : 0;
+  if (bytes > 0) {
+    res.type("application/octet-stream");
+    res.set("Content-Length", String(bytes));
+    return res.send(Buffer.alloc(bytes, 0xa5));
+  }
+  return res.json({ ok: true, timestamp: Date.now() });
+});
+
+app.post("/api/network-test", express.raw({ type: "application/octet-stream", limit: "1mb" }), (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.json({ ok: true, received: Buffer.isBuffer(req.body) ? req.body.length : 0 });
+});
+
 function requireAdmin(req, res, next) {
   const auth = req.headers.authorization;
   const token = auth && auth.startsWith("Bearer ") ? auth.slice(7) : "";

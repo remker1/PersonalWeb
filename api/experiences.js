@@ -2,7 +2,7 @@
 // POST /api/experiences       — admin: add one
 // PUT  /api/experiences       — admin: replace all
 
-import { getSupabase, setCors, isAdmin } from "./_lib.js";
+import { getSupabase, setCors, isAdmin, sendSiteUpdateNotification } from "./_lib.js";
 
 export default async function handler(req, res) {
   setCors(res);
@@ -31,6 +31,7 @@ export default async function handler(req, res) {
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
+    await sendSiteUpdateNotification({ action: "Added", section: "Experience", title: data.title });
     return res.status(201).json(data);
   }
 
@@ -59,6 +60,11 @@ export default async function handler(req, res) {
       .from("experiences")
       .select("*")
       .order("created_at", { ascending: false });
+    await sendSiteUpdateNotification({
+      action: "Reordered or replaced",
+      section: "Experiences",
+      details: `${items.length} item(s) saved`,
+    });
     return res.json({ items: data ?? [] });
   }
 

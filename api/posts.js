@@ -6,7 +6,7 @@
 // PUT    /api/posts/:slug  — admin: update
 // DELETE /api/posts/:slug  — admin: delete
 
-import { getSupabase, setCors, isAdmin } from "./_lib.js";
+import { getSupabase, setCors, isAdmin, sendSiteUpdateNotification } from "./_lib.js";
 
 function normalizeTags(tags) {
   if (Array.isArray(tags)) return tags;
@@ -48,6 +48,12 @@ async function handleItem(req, res, supabase, admin, slug) {
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
+    await sendSiteUpdateNotification({
+      action: "Updated",
+      section: "Blog post",
+      title: data.title,
+      details: data.published ? "Published" : "Draft",
+    });
     return res.json(data);
   }
 
@@ -55,6 +61,7 @@ async function handleItem(req, res, supabase, admin, slug) {
   if (req.method === "DELETE") {
     const { error } = await supabase.from("posts").delete().eq("slug", slug);
     if (error) return res.status(500).json({ error: error.message });
+    await sendSiteUpdateNotification({ action: "Deleted", section: "Blog post", title: slug });
     return res.status(204).end();
   }
 
@@ -103,6 +110,12 @@ export default async function handler(req, res) {
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
+    await sendSiteUpdateNotification({
+      action: "Created",
+      section: "Blog post",
+      title: data.title,
+      details: data.published ? "Published" : "Draft",
+    });
     return res.status(201).json(data);
   }
 

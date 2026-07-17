@@ -1,6 +1,12 @@
 // DELETE /api/photos/:id  — admin (also removes file from Supabase Storage)
 
-import { getSupabase, setCors, isAdmin, deleteImageFromSupabase } from "../_lib.js";
+import {
+  getSupabase,
+  setCors,
+  isAdmin,
+  deleteImageFromSupabase,
+  sendSiteUpdateNotification,
+} from "../_lib.js";
 
 export default async function handler(req, res) {
   setCors(res);
@@ -23,6 +29,7 @@ export default async function handler(req, res) {
 
     if (row?.url) await deleteImageFromSupabase(supabase, row.url);
 
+    await sendSiteUpdateNotification({ action: "Deleted", section: "Photo", title: `ID ${id}` });
     return res.status(204).end();
   }
 

@@ -2,7 +2,7 @@
 // POST /api/projects       — admin: add one
 // PUT  /api/projects       — admin: replace all
 
-import { getSupabase, setCors, isAdmin } from "./_lib.js";
+import { getSupabase, setCors, isAdmin, sendSiteUpdateNotification } from "./_lib.js";
 
 function normalizeTags(tags) {
   if (Array.isArray(tags)) return tags;
@@ -41,6 +41,7 @@ export default async function handler(req, res) {
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
+    await sendSiteUpdateNotification({ action: "Added", section: "Project", title: data.title });
     return res.status(201).json(data);
   }
 
@@ -70,6 +71,11 @@ export default async function handler(req, res) {
       .from("projects")
       .select("*")
       .order("id", { ascending: true });
+    await sendSiteUpdateNotification({
+      action: "Reordered or replaced",
+      section: "Projects",
+      details: `${items.length} item(s) saved`,
+    });
     return res.json({ items: data ?? [] });
   }
 
