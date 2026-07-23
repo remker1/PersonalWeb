@@ -5,13 +5,6 @@ import ndtDownloadWorkerSource from "@m-lab/ndt7/src/ndt7-download-worker.js?raw
 import ndtUploadWorkerSource from "@m-lab/ndt7/src/ndt7-upload-worker.js?raw";
 import { useDocTitle, useT } from "./testersUtils";
 
-const PING_SAMPLES = 10;
-const DOWNLOAD_CALIBRATION_BYTES = 1_000_000;
-const UPLOAD_CALIBRATION_BYTES = 250_000;
-const DOWNLOAD_DURATION_MS = 6_000;
-const UPLOAD_DURATION_MS = 6_000;
-const MAX_DOWNLOAD_TOTAL_BYTES = 192_000_000;
-const MAX_UPLOAD_TOTAL_BYTES = 72_000_000;
 const SPEED_UNIT_STORAGE_KEY = "network-speed-unit";
 const SERVER_STORAGE_KEY = "network-test-server";
 const TEST_SERVERS = [
@@ -24,14 +17,6 @@ const TEST_SERVERS = [
     id: "mlab",
     labelKey: "ntServerMlab",
     engine: "mlab",
-  },
-  {
-    id: "website",
-    labelKey: "ntServerWebsite",
-    engine: "website",
-    downloadUrl: "/api/messages",
-    uploadUrl: "/api/messages",
-    params: { networkTest: "1" },
   },
 ];
 const CLOUDFLARE_MEASUREMENTS = [
@@ -83,101 +68,12 @@ function displaySpeed(value, unit) {
   return Number((value * config.multiplier).toFixed(config.decimals));
 }
 
-function testUrl(baseUrl, params) {
-  const url = new URL(baseUrl, window.location.origin);
-  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
-  return url.toString();
-}
-
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const median = (values) => {
   const sorted = [...values].sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 };
-const mbps = (bytes, milliseconds) => (bytes * 8) / Math.max(milliseconds, 1) / 1_000;
 const rounded = (value, decimals = 0) => Number.isFinite(value) ? Number(value.toFixed(decimals)) : null;
-
-function downloadSettings(estimatedMbps) {
-  return {
-    connections: estimatedMbps >= 4 ? 4 : 2,
-    bytes: estimatedMbps >= 100 ? 4_000_000 : estimatedMbps >= 25 ? 2_000_000 : 1_000_000,
-  };
-}
-
-function uploadSettings(estimatedMbps) {
-  return {
-    connections: estimatedMbps >= 4 ? 4 : 2,
-    bytes: estimatedMbps >= 40 ? 750_000 : estimatedMbps >= 10 ? 500_000 : 250_000,
-  };
-}
-
-async function receiveBytes(server, bytes, signal, onBytes = () => {}) {
-  const response = await fetch(testUrl(server.downloadUrl, {
-    ...server.params,
-    bytes,
-    nonce: `${Date.now()}-${Math.random()}`,
-  }), {
-    cache: "no-store",
-    signal,
-  });
-  if (!response.ok) throw new Error("Download failed");
-
-  if (!response.body) {
-    const received = (await response.arrayBuffer()).byteLength;
-    onBytes(received);
-    return received;
-  }
-
-  const reader = response.body.getReader();
-  let received = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    received += value.byteLength;
-    onBytes(value.byteLength);
-  }
-  return received;
-}
-
-async function sendBytes(server, payload, signal) {
-  const response = await fetch(testUrl(server.uploadUrl, {
-    ...server.params,
-    upload: `${Date.now()}-${Math.random()}`,
-  }), {
-    method: "POST",
-    headers: { "Content-Type": "application/octet-stream" },
-    body: payload,
-    cache: "no-store",
-    signal,
-  });
-  if (!response.ok) throw new Error("Upload failed");
-  await response.arrayBuffer();
-  return payload.byteLength;
-}
-
-async function runTimedTransfer({ duration, connections, maxBytes, transfer, onProgress }) {
-  const started = performance.now();
-  const deadline = started + duration;
-  let transferred = 0;
-  const progressTimer = window.setInterval(() => {
-    onProgress(Math.min((performance.now() - started) / duration, 1));
-  }, 100);
-
-  try {
-    await Promise.all(Array.from({ length: connections }, async () => {
-      while (performance.now() < deadline && transferred < maxBytes) {
-        await transfer((bytes) => { transferred += bytes; });
-      }
-    }));
-  } finally {
-    window.clearInterval(progressTimer);
-  }
-
-  const elapsed = performance.now() - started;
-  onProgress(1);
-  return mbps(transferred, elapsed);
-}
 
 function qualityOf({ ping, jitter, loss, download, upload }) {
   if ((loss != null && loss > 10) || (ping != null && ping > 150) || (jitter != null && jitter > 50) || download < 5 || upload < 1) return "poor";
@@ -195,67 +91,6 @@ function finalizeResults(values) {
     server: values.server || "",
   };
   return { ...results, quality: qualityOf(results) };
-}
-
-async function runWebsiteTest(server, controller, setStatus, setProgress, unavailableMessage) {
-  const pings = [];
-  let failures = 0;
-  for (let index = 0; index < PING_SAMPLES; index += 1) {
-    const started = performance.now();
-    try {
-      const response = await fetch(testUrl(server.downloadUrl, {
-        ...server.params,
-        bytes: 0,
-        ping: `${Date.now()}-${index}`,
-      }), { cache: "no-store", signal: controller.signal });
-      if (!response.ok) throw new Error("Ping failed");
-      await response.arrayBuffer();
-      pings.push(performance.now() - started);
-    } catch (error) {
-      if (error.name === "AbortError") throw error;
-      failures += 1;
-    }
-    setProgress(5 + Math.round(((index + 1) / PING_SAMPLES) * 15));
-    await wait(80);
-  }
-  if (!pings.length) throw new Error(unavailableMessage);
-
-  const ping = Math.min(...pings);
-  const differences = pings.slice(1).map((value, index) => Math.abs(value - pings[index]));
-  const jitter = differences.length ? median(differences) : 0;
-  const loss = (failures / PING_SAMPLES) * 100;
-
-  setStatus("download");
-  setProgress(22);
-  const downloadCalibrationStarted = performance.now();
-  await receiveBytes(server, DOWNLOAD_CALIBRATION_BYTES, controller.signal);
-  const downloadEstimate = mbps(DOWNLOAD_CALIBRATION_BYTES, performance.now() - downloadCalibrationStarted);
-  const downloadConfig = downloadSettings(downloadEstimate);
-  const download = await runTimedTransfer({
-    duration: DOWNLOAD_DURATION_MS,
-    connections: downloadConfig.connections,
-    maxBytes: MAX_DOWNLOAD_TOTAL_BYTES,
-    transfer: (record) => receiveBytes(server, downloadConfig.bytes, controller.signal, record),
-    onProgress: (value) => setProgress(25 + Math.round(value * 40)),
-  });
-
-  setStatus("upload");
-  setProgress(68);
-  const uploadCalibrationData = new Uint8Array(UPLOAD_CALIBRATION_BYTES);
-  const uploadCalibrationStarted = performance.now();
-  await sendBytes(server, uploadCalibrationData, controller.signal);
-  const uploadEstimate = mbps(UPLOAD_CALIBRATION_BYTES, performance.now() - uploadCalibrationStarted);
-  const uploadConfig = uploadSettings(uploadEstimate);
-  const uploadData = new Uint8Array(uploadConfig.bytes);
-  const upload = await runTimedTransfer({
-    duration: UPLOAD_DURATION_MS,
-    connections: uploadConfig.connections,
-    maxBytes: MAX_UPLOAD_TOTAL_BYTES,
-    transfer: async (record) => record(await sendBytes(server, uploadData, controller.signal)),
-    onProgress: (value) => setProgress(70 + Math.round(value * 30)),
-  });
-
-  return finalizeResults({ ping, jitter, loss, download, upload, server: "testers.remker1.dev" });
 }
 
 function runCloudflareTest(registerAbort, setStatus, setProgress) {
@@ -457,12 +292,8 @@ export default function NetworkTester() {
       let nextResults;
       if (server.engine === "cloudflare") {
         nextResults = await runCloudflareTest(registerAbort, setStatus, setProgress);
-      } else if (server.engine === "mlab") {
-        nextResults = await runMlabTest(registerAbort, setStatus, setProgress);
       } else {
-        const controller = new AbortController();
-        registerAbort(() => controller.abort());
-        nextResults = await runWebsiteTest(server, controller, setStatus, setProgress, t("ntUnavailable"));
+        nextResults = await runMlabTest(registerAbort, setStatus, setProgress);
       }
       setResults(nextResults);
       setProgress(100);
