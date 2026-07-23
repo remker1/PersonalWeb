@@ -11,6 +11,8 @@
     "serve": "node backend/server.js"
   },
   "dependencies": {
+    "@cloudflare/speedtest": "^1.12.1",
+    "@m-lab/ndt7": "^0.1.4",
     "@supabase/supabase-js": "^2.106.2",
     "@tailwindcss/vite": "^4.2.1",
     "dotenv": "^17.3.1",
