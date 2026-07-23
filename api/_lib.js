@@ -107,7 +107,7 @@ export async function sendDiscordNotification(entry) {
 
 /** Send a non-fatal Discord notification after an admin content update succeeds. */
 export async function sendSiteUpdateNotification({ action, section, title, details }) {
-  const webhookUrl = process.env.DISCORD_SERVERINFO_WEBHOOK_URL || "";
+  const webhookUrl = process.env.DISCORD_WEBSITE_WEBHOOK_URL || "";
   if (!webhookUrl) return;
 
   const fields = [
@@ -123,6 +123,7 @@ export async function sendSiteUpdateNotification({ action, section, title, detai
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "Personal Website Updates",
+        allowed_mentions: { parse: [] },
         embeds: [
           {
             title: "Website content updated",
@@ -136,5 +137,38 @@ export async function sendSiteUpdateNotification({ action, section, title, detai
     });
   } catch {
     /* notifications must never block a successful content update */
+  }
+}
+
+/** Send a non-fatal notification when the website reports an unexpected error. */
+export async function sendWebsiteErrorNotification({ message, stack, source, page, userAgent }) {
+  const webhookUrl = process.env.DISCORD_WEBSITE_WEBHOOK_URL || "";
+  if (!webhookUrl) return;
+
+  const fields = [
+    { name: "Source", value: String(source || "Website").slice(0, 1024), inline: true },
+    { name: "Page", value: String(page || "Unknown").slice(0, 1024), inline: true },
+    { name: "Error", value: String(message || "Unknown error").slice(0, 1024) },
+  ];
+  if (stack) fields.push({ name: "Stack", value: `\`\`\`\n${String(stack).slice(0, 900)}\n\`\`\`` });
+  if (userAgent) fields.push({ name: "Browser", value: String(userAgent).slice(0, 1024) });
+
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "Personal Website Alerts",
+        allowed_mentions: { parse: [] },
+        embeds: [{
+          title: "Website error reported",
+          color: 0xed4245,
+          fields,
+          timestamp: new Date().toISOString(),
+        }],
+      }),
+    });
+  } catch {
+    /* error reporting must never create another application failure */
   }
 }

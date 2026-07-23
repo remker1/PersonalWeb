@@ -36,10 +36,10 @@ jobs:
           done
           echo "live=false" >> "$GITHUB_OUTPUT"
 
-      - name: Send ServerInfo notification
+      - name: Send website notification
         if: always()
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_SERVERINFO_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBSITE_WEBHOOK_URL }}
           DEPLOYMENT_LIVE: ${{ steps.deployment.outputs.live }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           COMMIT_URL: ${{ github.event.head_commit.url }}
@@ -52,6 +52,7 @@ jobs:
           const live = process.env.DEPLOYMENT_LIVE === "true";
           const payload = {
             username: "Personal Website Updates",
+            allowed_mentions: { parse: [] },
             embeds: [{
               title: live ? "Website update is live" : "Website update pushed",
               url: "https://testers.remker1.dev",

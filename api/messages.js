@@ -2,11 +2,44 @@
 // POST /api/messages  — public: submit contact form
 // PUT  /api/messages  — admin: replace all
 
-import { getSupabase, setCors, isAdmin, sendDiscordNotification } from "./_lib.js";
+import {
+  getSupabase,
+  setCors,
+  isAdmin,
+  sendDiscordNotification,
+  sendWebsiteErrorNotification,
+} from "./_lib.js";
+
+const ERROR_REPORT_HOSTS = new Set([
+  "remker1.dev",
+  "www.remker1.dev",
+  "testers.remker1.dev",
+  "localhost",
+  "127.0.0.1",
+]);
+
+function errorReportIsAllowed(req) {
+  const origin = req.headers.origin || req.headers.referer || "";
+  try {
+    return ERROR_REPORT_HOSTS.has(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
 
 export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
+
+  if (req.method === "POST" && req.query.clientError === "1") {
+    if (!errorReportIsAllowed(req)) return res.status(403).json({ error: "Forbidden" });
+    const { message, stack, source, page, userAgent } = req.body || {};
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Missing error message" });
+    }
+    await sendWebsiteErrorNotification({ message, stack, source, page, userAgent });
+    return res.status(202).json({ ok: true });
+  }
 
   const supabase = getSupabase();
 
