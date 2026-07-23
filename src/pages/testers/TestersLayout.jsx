@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { path: "/battery", key: "battery", icon: "🔋" },
   { path: "/device", key: "device", icon: "💻" },
   { path: "/network", key: "network", icon: "🌐" },
+  { path: "/contact", key: "contactDeveloper", icon: "✉️" },
 ];
 
 export function TestersLayout({ children }) {

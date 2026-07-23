@@ -80,12 +80,14 @@ export async function deleteImageFromSupabase(supabase, url) {
 /** Send Discord notification for a new contact message. */
 export async function sendDiscordNotification(entry) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL || "";
-  if (!webhookUrl) return;
+  if (!webhookUrl) return false;
   try {
-    await fetch(webhookUrl, {
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        username: "Personal Website Messages",
+        allowed_mentions: { parse: [] },
         embeds: [
           {
             title: `New message from ${entry.name || "someone"}`,
@@ -93,6 +95,7 @@ export async function sendDiscordNotification(entry) {
             fields: [
               { name: "Name", value: entry.name || "N/A", inline: true },
               { name: "Email", value: entry.email || "N/A", inline: true },
+              { name: "Source", value: entry.source || "remker1.dev", inline: true },
               { name: "Message", value: entry.message || "(empty)" },
             ],
             timestamp: new Date().toISOString(),
@@ -100,8 +103,9 @@ export async function sendDiscordNotification(entry) {
         ],
       }),
     });
+    return response.ok;
   } catch {
-    /* non-fatal */
+    return false;
   }
 }
 

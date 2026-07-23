@@ -11,6 +11,7 @@ const CARDS = [
   { path: "/battery", titleKey: "battery", descKey: "batteryDesc", icon: "🔋" },
   { path: "/device", titleKey: "device", descKey: "deviceDesc", icon: "💻" },
   { path: "/network", titleKey: "network", descKey: "networkDesc", icon: "🌐" },
+  { path: "/contact", titleKey: "contactDeveloper", descKey: "contactDeveloperDesc", icon: "✉️" },
 ];
 
 export default function TestersHome() {

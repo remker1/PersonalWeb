@@ -10,6 +10,7 @@ import TouchTester from "./TouchTester";
 import BatteryTester from "./BatteryTester";
 import DeviceInfo from "./DeviceInfo";
 import NetworkTester from "./NetworkTester";
+import DeveloperContact from "./DeveloperContact";
 import { tPath } from "./testersUtils";
 
 // Mounted at "/*" on testers.remker1.dev, or at "/testers/*" on the main site.
@@ -28,6 +29,7 @@ export default function TestersApp() {
         <Route path="battery" element={<BatteryTester />} />
         <Route path="device" element={<DeviceInfo />} />
         <Route path="network" element={<NetworkTester />} />
+        <Route path="contact" element={<DeveloperContact />} />
         <Route path="*" element={<Navigate to="." replace />} />
       </Routes>
     </TestersLayout>
