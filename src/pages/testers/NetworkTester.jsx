@@ -9,6 +9,30 @@ const UPLOAD_DURATION_MS = 6_000;
 const MAX_DOWNLOAD_TOTAL_BYTES = 192_000_000;
 const MAX_UPLOAD_TOTAL_BYTES = 72_000_000;
 const NETWORK_ENDPOINT = "/api/messages?networkTest=1";
+const SPEED_UNIT_STORAGE_KEY = "network-speed-unit";
+const SPEED_UNITS = {
+  Kbps: { multiplier: 1_000, decimals: 0 },
+  Mbps: { multiplier: 1, decimals: 1 },
+  Gbps: { multiplier: 0.001, decimals: 3 },
+  "KB/s": { multiplier: 125, decimals: 1 },
+  "MB/s": { multiplier: 0.125, decimals: 2 },
+  "GB/s": { multiplier: 0.000_125, decimals: 3 },
+};
+
+function initialSpeedUnit() {
+  try {
+    const savedUnit = window.localStorage.getItem(SPEED_UNIT_STORAGE_KEY);
+    return Object.hasOwn(SPEED_UNITS, savedUnit) ? savedUnit : "Mbps";
+  } catch {
+    return "Mbps";
+  }
+}
+
+function displaySpeed(value, unit) {
+  if (value == null) return value;
+  const config = SPEED_UNITS[unit] || SPEED_UNITS.Mbps;
+  return Number((value * config.multiplier).toFixed(config.decimals));
+}
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const median = (values) => {
@@ -117,8 +141,19 @@ export default function NetworkTester() {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState(null);
   const [error, setError] = useState("");
+  const [speedUnit, setSpeedUnit] = useState(initialSpeedUnit);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  const changeSpeedUnit = (event) => {
+    const nextUnit = event.target.value;
+    setSpeedUnit(nextUnit);
+    try {
+      window.localStorage.setItem(SPEED_UNIT_STORAGE_KEY, nextUnit);
+    } catch {
+      return;
+    }
+  };
 
   const runTest = async () => {
     abortRef.current?.abort();
@@ -207,9 +242,17 @@ export default function NetworkTester() {
       <div className="text-center max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold">🌐 {t("network")}</h1>
         <p className="mt-2 text-text-secondary">{t("ntIntro")}</p>
-        <button onClick={runTest} disabled={running} className="mt-6 px-6 py-3 rounded-xl bg-accent text-bg-primary font-semibold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-          {running ? statusLabel : results ? t("ntAgain") : t("ntStart")}
-        </button>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <button onClick={runTest} disabled={running} className="px-6 py-3 rounded-xl bg-accent text-bg-primary font-semibold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            {running ? statusLabel : results ? t("ntAgain") : t("ntStart")}
+          </button>
+          <label className="flex items-center gap-2 rounded-xl border border-border bg-bg-card px-3 py-2 text-sm text-text-secondary">
+            <span>{t("ntSpeedUnit")}</span>
+            <select value={speedUnit} onChange={changeSpeedUnit} className="rounded-lg border border-border bg-bg-primary px-2 py-1 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent">
+              {Object.keys(SPEED_UNITS).map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+            </select>
+          </label>
+        </div>
       </div>
 
       {running && (
@@ -226,8 +269,8 @@ export default function NetworkTester() {
         <ResultCard icon="↔️" label={t("ntPing")} value={results?.ping} unit="ms" hint={t("ntPingHint")} />
         <ResultCard icon="〰️" label={t("ntJitter")} value={results?.jitter} unit="ms" hint={t("ntJitterHint")} />
         <ResultCard icon="📦" label={t("ntLoss")} value={results?.loss} unit="%" hint={t("ntLossHint")} />
-        <ResultCard icon="⬇️" label={t("ntDownload")} value={results?.download} unit="Mbps" hint={t("ntDownloadHint")} />
-        <ResultCard icon="⬆️" label={t("ntUpload")} value={results?.upload} unit="Mbps" hint={t("ntUploadHint")} />
+        <ResultCard icon="⬇️" label={t("ntDownload")} value={displaySpeed(results?.download, speedUnit)} unit={speedUnit} hint={t("ntDownloadHint")} />
+        <ResultCard icon="⬆️" label={t("ntUpload")} value={displaySpeed(results?.upload, speedUnit)} unit={speedUnit} hint={t("ntUploadHint")} />
       </div>
 
       {results && (
