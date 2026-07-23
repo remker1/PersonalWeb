@@ -237,12 +237,6 @@ export async function deletePost(slug) {
   if (!res.ok) throw new Error(await res.text());
 }
 
-export async function getServerStats() {
-  const res = await fetch(`${API_BASE}/api/system/stats`, { headers: getAuthHeader() });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
 export async function setMessages(items) {
   const res = await fetch(`${API_BASE}/api/messages`, {
     method: "PUT",
