@@ -56,15 +56,32 @@ export default async function handler(req, res) {
 
   // ── POST (public — contact form) ──────────────────────────────────
   if (req.method === "POST") {
-    const { name, email, message } = req.body ?? {};
+    const { name, email, message, source, website } = req.body ?? {};
+    if (website) return res.status(202).json({ ok: true });
+    if (![name, email, message].every((value) => typeof value === "string" && value.trim())) {
+      return res.status(400).json({ error: "Name, email and message are required" });
+    }
+    const clean = {
+      name: name.trim().slice(0, 120),
+      email: email.trim().slice(0, 254),
+      message: message.trim().slice(0, 4000),
+    };
+    const messageSource = source === "testers.remker1.dev" ? source : "remker1.dev";
     const { data, error } = await supabase
       .from("messages")
-      .insert({ name: name || "", email: email || "", message: message || "" })
+      .insert(clean)
       .select()
       .single();
     if (error) return res.status(500).json({ error: error.message });
-    sendDiscordNotification(data); // fire-and-forget
-    return res.status(201).json(data);
+    const discordDelivered = await sendDiscordNotification({ ...data, source: messageSource });
+    if (!discordDelivered) {
+      await sendWebsiteErrorNotification({
+        message: "A contact message was saved, but its Discord notification failed.",
+        source: "api/messages",
+        page: messageSource,
+      });
+    }
+    return res.status(201).json({ ...data, discordDelivered });
   }
 
   if (!isAdmin(req)) return res.status(401).json({ error: "Unauthorized" });
