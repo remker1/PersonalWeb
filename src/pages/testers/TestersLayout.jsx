@@ -11,7 +11,6 @@ const NAV_ITEMS = [
   { path: "/screen", key: "screen", icon: "🖥️" },
   { path: "/touch", key: "touch", icon: "👆" },
   { path: "/battery", key: "battery", icon: "🔋" },
-  { path: "/device", key: "device", icon: "💻" },
   { path: "/network", key: "network", icon: "🌐" },
   { path: "/contact", key: "contactDeveloper", icon: "✉️" },
 ];

@@ -9,7 +9,6 @@ const CARDS = [
   { path: "/screen", titleKey: "screen", descKey: "screenDesc", icon: "🖥️" },
   { path: "/touch", titleKey: "touch", descKey: "touchDesc", icon: "👆" },
   { path: "/battery", titleKey: "battery", descKey: "batteryDesc", icon: "🔋" },
-  { path: "/device", titleKey: "device", descKey: "deviceDesc", icon: "💻" },
   { path: "/network", titleKey: "network", descKey: "networkDesc", icon: "🌐" },
   { path: "/contact", titleKey: "contactDeveloper", descKey: "contactDeveloperDesc", icon: "✉️" },
 ];

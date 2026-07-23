@@ -8,7 +8,6 @@ import TrackpadTester from "./MouseTester";
 import ScreenTester from "./ScreenTester";
 import TouchTester from "./TouchTester";
 import BatteryTester from "./BatteryTester";
-import DeviceInfo from "./DeviceInfo";
 import NetworkTester from "./NetworkTester";
 import DeveloperContact from "./DeveloperContact";
 import { tPath } from "./testersUtils";
@@ -27,7 +26,6 @@ export default function TestersApp() {
         <Route path="screen" element={<ScreenTester />} />
         <Route path="touch" element={<TouchTester />} />
         <Route path="battery" element={<BatteryTester />} />
-        <Route path="device" element={<DeviceInfo />} />
         <Route path="network" element={<NetworkTester />} />
         <Route path="contact" element={<DeveloperContact />} />
         <Route path="*" element={<Navigate to="." replace />} />
