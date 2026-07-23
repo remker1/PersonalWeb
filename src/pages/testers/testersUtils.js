@@ -16,7 +16,7 @@ export const IS_MAC =
 const dict = {
   en: {
     siteTitle: "Device Testers",
-    tagline: "Test your keyboard, webcam, speakers and microphone — right in the browser.",
+    tagline: "Check your device, network, keyboard, camera and audio — right in the browser.",
     privacy: "Everything runs locally in your browser. No audio, video or keystroke data ever leaves your device.",
     home: "Home",
     keyboard: "Keyboard Tester",
@@ -255,7 +255,7 @@ const dict = {
   },
   zh: {
     siteTitle: "设备测试工具",
-    tagline: "在浏览器里直接测试你的键盘、摄像头、扬声器和麦克风。",
+    tagline: "在浏览器里直接检查设备信息、网络、键盘、摄像头和音频。",
     privacy: "所有测试均在浏览器本地运行，任何音频、视频或按键数据都不会离开你的设备。",
     home: "首页",
     keyboard: "键盘测试",
@@ -487,7 +487,7 @@ const dict = {
   },
   fr: {
     siteTitle: "Testeurs d'appareils",
-    tagline: "Testez votre clavier, votre webcam, vos haut-parleurs et votre micro — directement dans le navigateur.",
+    tagline: "Vérifiez votre appareil, votre réseau, votre clavier, votre caméra et votre audio dans le navigateur.",
     privacy: "Tout s'exécute localement dans votre navigateur. Aucune donnée audio, vidéo ou de frappe ne quitte votre appareil.",
     home: "Accueil",
     keyboard: "Test du clavier",
