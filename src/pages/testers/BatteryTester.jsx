@@ -45,6 +45,7 @@ function parseIoreg(text) {
   };
   const design = num(/"DesignCapacity"\s*=\s*(\d+)/);
   let full = num(/"AppleRawMaxCapacity"\s*=\s*(\d+)/);
+  if (full == null) full = num(/"FullChargeCapacity"\s*=\s*(\d+)/); // Apple Silicon: real mAh lives in the BatteryData dict
   const maxCap = num(/"MaxCapacity"\s*=\s*(\d+)/);
   if (full == null && maxCap != null && maxCap > 200) full = maxCap; // Intel Macs: MaxCapacity is mAh, Apple Silicon: a percentage
   const cycles = num(/"CycleCount"\s*=\s*(\d+)/);

@@ -4,7 +4,6 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import PageTransition from "./components/PageTransition";
 import Home from "./pages/Home";
-import PhotographyGallery from "./pages/PhotographyGallery";
 import SayHello from "./pages/SayHello";
 import Admin from "./pages/Admin";
 import Blog from "./pages/Blog";
@@ -24,14 +23,6 @@ function AnimatedRoutes() {
           element={
             <PageTransition>
               <Home />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/photography"
-          element={
-            <PageTransition>
-              <PhotographyGallery />
             </PageTransition>
           }
         />

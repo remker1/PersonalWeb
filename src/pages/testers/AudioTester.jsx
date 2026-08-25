@@ -4,7 +4,14 @@ import { useT, useDocTitle } from "./testersUtils";
 const SUPPORTS_SINK =
   typeof HTMLMediaElement !== "undefined" && "setSinkId" in HTMLMediaElement.prototype;
 
-const FREQ_PRESETS = [100, 440, 1000, 5000, 10000];
+// "Twinkle Twinkle Little Star" in C major (C4 D4 E4 F4 G4 A4)
+const TEST_MELODY = [
+  261.63, 261.63, 392, 392, 440, 440, 392, // Twinkle twinkle little star
+  349.23, 349.23, 329.63, 329.63, 293.66, 293.66, 261.63, // how I wonder what you are
+  392, 392, 349.23, 349.23, 329.63, 329.63, 293.66, // up above the world so high
+  392, 392, 349.23, 349.23, 329.63, 329.63, 293.66, // like a diamond in the sky
+];
+const NOTE_DURATION = 0.28;
 
 export default function AudioTester() {
   const t = useT();
@@ -12,10 +19,8 @@ export default function AudioTester() {
 
   /* ── speaker ── */
   const ctxRef = useRef(null);
-  const oscRef = useRef(null);
-  const pannerRef = useRef(null);
+  const musicRef = useRef(null);
   const sinkAudioRef = useRef(null);
-  const [freq, setFreq] = useState(440);
   const [activePan, setActivePan] = useState(null); // -1 | 0 | 1 | null
   const [outputs, setOutputs] = useState([]);
   const [outputId, setOutputId] = useState("");
@@ -41,42 +46,76 @@ export default function AudioTester() {
     return ctxRef.current;
   };
 
-  const stopTone = () => {
-    if (oscRef.current) {
+  const stopMusic = () => {
+    const music = musicRef.current;
+    if (music) {
+      window.clearTimeout(music.timer);
+      music.nodes.forEach((node) => {
+        node.onended = null;
+        try {
+          node.stop();
+        } catch { /* already stopped */ }
+        node.disconnect();
+      });
       try {
-        oscRef.current.stop();
-      } catch { /* already stopped */ }
-      oscRef.current.disconnect();
-      oscRef.current = null;
+        music.gain.disconnect();
+        music.panner?.disconnect();
+      } catch { /* already disconnected */ }
+      musicRef.current = null;
     }
     setActivePan(null);
   };
 
-  const playTone = (pan) => {
+  const playMusic = (pan) => {
     if (activePan === pan) {
-      stopTone();
+      stopMusic();
       return;
     }
     const ctx = getCtx();
-    stopTone();
-    const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.value = freq;
+    stopMusic();
     const gain = ctx.createGain();
-    gain.gain.value = 0.25;
+    gain.gain.value = 0.22;
     const panner = ctx.createStereoPanner
       ? ctx.createStereoPanner()
       : null;
     if (panner) panner.pan.value = pan;
-    pannerRef.current = panner;
     const dest = SUPPORTS_SINK ? ctx._dest : ctx.destination;
     if (panner) {
-      osc.connect(gain).connect(panner).connect(dest);
+      gain.connect(panner).connect(dest);
     } else {
-      osc.connect(gain).connect(dest);
+      gain.connect(dest);
     }
-    osc.start();
-    oscRef.current = osc;
+
+    const music = { nodes: [], gain, panner, timer: null };
+    musicRef.current = music;
+
+    const schedulePass = () => {
+      if (musicRef.current !== music) return;
+      const startAt = ctx.currentTime + 0.05;
+      TEST_MELODY.forEach((frequency, index) => {
+        const noteStart = startAt + index * NOTE_DURATION;
+        const noteEnd = noteStart + NOTE_DURATION * 0.88;
+        const oscillator = ctx.createOscillator();
+        const envelope = ctx.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.value = frequency;
+        envelope.gain.setValueAtTime(0.0001, noteStart);
+        envelope.gain.exponentialRampToValueAtTime(0.75, noteStart + 0.025);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+        oscillator.connect(envelope).connect(gain);
+        oscillator.start(noteStart);
+        oscillator.stop(noteEnd);
+        oscillator.onended = () => {
+          oscillator.disconnect();
+          envelope.disconnect();
+          music.nodes = music.nodes.filter((node) => node !== oscillator);
+        };
+        music.nodes.push(oscillator);
+      });
+      music.timer = window.setTimeout(schedulePass, TEST_MELODY.length * NOTE_DURATION * 1000);
+    };
+
+    schedulePass();
     setActivePan(pan);
   };
 
@@ -88,10 +127,6 @@ export default function AudioTester() {
       console.error("setSinkId failed", err);
     }
   };
-
-  useEffect(() => {
-    if (oscRef.current) oscRef.current.frequency.value = freq;
-  }, [freq]);
 
   /* ── microphone ── */
   const micStreamRef = useRef(null);
@@ -206,7 +241,7 @@ export default function AudioTester() {
   useEffect(
     () => () => {
       stopMic();
-      stopTone();
+      stopMusic();
       sinkAudioRef.current?.pause();
       ctxRef.current?.close().catch(() => {});
     },
@@ -232,7 +267,7 @@ export default function AudioTester() {
           {panButtons.map(({ pan, label, icon }) => (
             <button
               key={pan}
-              onClick={() => playTone(pan)}
+              onClick={() => playMusic(pan)}
               className={`px-5 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                 activePan === pan
                   ? "bg-accent text-bg-primary border-accent"
@@ -243,37 +278,6 @@ export default function AudioTester() {
               {activePan === pan ? t("spStopTone") : label}
             </button>
           ))}
-        </div>
-
-        <div className="mt-5 max-w-md">
-          <label className="text-sm text-text-secondary flex justify-between">
-            <span>{t("spFreq")}</span>
-            <span className="font-mono tabular-nums">{freq} Hz</span>
-          </label>
-          <input
-            type="range"
-            min={2}
-            max={4.3}
-            step={0.01}
-            value={Math.log10(freq)}
-            onChange={(e) => setFreq(Math.round(10 ** Number(e.target.value)))}
-            className="w-full mt-1 accent-[var(--accent)]"
-          />
-          <div className="flex gap-2 mt-2">
-            {FREQ_PRESETS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setFreq(f)}
-                className={`px-2 py-0.5 rounded-md text-xs border transition-colors ${
-                  freq === f
-                    ? "border-accent text-accent"
-                    : "border-border text-text-muted hover:bg-bg-secondary"
-                }`}
-              >
-                {f >= 1000 ? `${f / 1000}k` : f}
-              </button>
-            ))}
-          </div>
         </div>
 
         {SUPPORTS_SINK ? (

@@ -6,15 +6,13 @@ import { useTheme } from "../contexts/ThemeContext";
 import {
   getExtraExperiences, saveExtraExperiences,
   getExtraProjects, saveExtraProjects,
-  getExtraPhotos, saveExtraPhotos,
 } from "../data/dynamicContent";
 import {
-  getExperiences, getProjects, getPhotos, getMessages,
+  getExperiences, getProjects, getMessages,
   addExperience as apiAddExperience, deleteExperience as apiDeleteExperience,
   addProject as apiAddProject, deleteProject as apiDeleteProject,
-  addPhoto as apiAddPhoto, deletePhoto as apiDeletePhoto,
   deleteMessage as apiDeleteMessage, setMessages as apiSetMessages,
-  setExperiences as apiSetExperiences, setProjects as apiSetProjects, setPhotos as apiSetPhotos,
+  setExperiences as apiSetExperiences, setProjects as apiSetProjects,
   verifyAdminPassword,
   getPosts, createPost, updatePost, deletePost,
 } from "../api";
@@ -76,7 +74,6 @@ function AdminPanel() {
   const [tab, setTab] = useState("experience");
   const [experiences, setExperiences] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [photos, setPhotos] = useState([]);
   const [messages, setMessages] = useState([]);
   const [apiAvailable, setApiAvailable] = useState(null);
 
@@ -84,16 +81,14 @@ function AdminPanel() {
     let mounted = true;
     const load = async () => {
       try {
-        const [ex, pr, ph, ms] = await Promise.all([
+        const [ex, pr, ms] = await Promise.all([
           getExperiences(),
           getProjects(),
-          getPhotos(),
           getMessages().catch(() => []),
         ]);
         if (mounted) {
           setExperiences(ex);
           setProjects(pr);
-          setPhotos(ph);
           setMessages(ms);
           setApiAvailable(true);
         }
@@ -101,7 +96,6 @@ function AdminPanel() {
         if (mounted) {
           setExperiences(getExtraExperiences());
           setProjects(getExtraProjects());
-          setPhotos(getExtraPhotos());
           setMessages(JSON.parse(localStorage.getItem(CONTACT_STORAGE_KEY) || "[]"));
           setApiAvailable(false);
         }
@@ -146,10 +140,6 @@ function AdminPanel() {
   // Project form
   const [projForm, setProjForm] = useState({ title: "", description: "", tags: "", github: "", live: "" });
   const [editingProjId, setEditingProjId] = useState(null);
-  // Photo form
-  const [photoForm, setPhotoForm] = useState({ url: "", alt: "" });
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [photoError, setPhotoError] = useState("");
 
   const resetExpForm = () => ({ title: "", company: "", description: "", startDate: "", endDate: "", isPresent: false });
   const resetProjForm = () => ({ title: "", description: "", tags: "", github: "", live: "" });
@@ -286,68 +276,6 @@ function AdminPanel() {
     saveExtraProjects(updated);
   };
 
-  const addPhoto = async (e) => {
-    e.preventDefault();
-    if (!photoForm.url.trim()) {
-      setPhotoError("Please upload an image or provide an image URL.");
-      return;
-    }
-    const newItem = { ...photoForm, id: Date.now() };
-    if (apiAvailable) {
-      try {
-        const saved = await apiAddPhoto(newItem);
-        setPhotos((prev) => [...prev, saved]);
-        setPhotoForm({ url: "", alt: "" });
-        setPhotoError("");
-        return;
-      } catch {
-        // fallback
-      }
-    }
-    const updated = [...photos, newItem];
-    setPhotos(updated);
-    saveExtraPhotos(updated);
-    setPhotoForm({ url: "", alt: "" });
-    setPhotoError("");
-  };
-
-  const removePhoto = async (id) => {
-    if (apiAvailable) {
-      try {
-        await apiDeletePhoto(id);
-        setPhotos((prev) => prev.filter((x) => x.id !== id));
-        return;
-      } catch {
-        // fallback
-      }
-    }
-    const updated = photos.filter((x) => x.id !== id);
-    setPhotos(updated);
-    saveExtraPhotos(updated);
-  };
-
-  const handlePhotoFile = (file) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setPhotoError("Only image files are supported.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhotoForm((prev) => ({
-        ...prev,
-        url: String(reader.result || ""),
-        alt: prev.alt || file.name.replace(/\.[^.]+$/, ""),
-      }));
-      setPhotoError("");
-    };
-    reader.onerror = () => {
-      setPhotoError("Failed to read this file. Try another image.");
-    };
-    reader.readAsDataURL(file);
-  };
-
   const removeMessage = async (id) => {
     if (apiAvailable) {
       try {
@@ -366,7 +294,6 @@ function AdminPanel() {
   const tabs = [
     { key: "experience", label: "Experience" },
     { key: "projects", label: "Projects" },
-    { key: "photos", label: "Photos" },
     { key: "messages", label: "Messages" },
     { key: "blog", label: "Blog" },
     { key: "adjustments", label: "Adjustments" },
@@ -599,103 +526,6 @@ function AdminPanel() {
                       Delete
                     </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Photos Tab */}
-        {tab === "photos" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <form onSubmit={addPhoto} className="space-y-3 mb-8">
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragOver(true);
-                }}
-                onDragLeave={() => setIsDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragOver(false);
-                  handlePhotoFile(e.dataTransfer.files?.[0]);
-                }}
-                className={`border border-dashed rounded-lg p-4 text-center transition-colors ${
-                  isDragOver
-                    ? "border-accent bg-accent/8"
-                    : "border-border bg-glass-surface"
-                }`}
-              >
-                <p className="text-sm text-text-secondary mb-2">
-                  Drag and drop an image here
-                </p>
-                <div className="text-xs text-text-muted mb-3">or</div>
-                <label className="inline-flex items-center px-3 py-1.5 rounded-md border border-border text-xs text-text-secondary hover:text-text-primary cursor-pointer transition-colors">
-                  Browse Files
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handlePhotoFile(e.target.files?.[0])}
-                  />
-                </label>
-              </div>
-              <input
-                className={inputClass}
-                placeholder="Image URL (optional if uploaded above)"
-                value={photoForm.url}
-                onChange={(e) => setPhotoForm({ ...photoForm, url: e.target.value })}
-              />
-              <input className={inputClass} placeholder="Alt text / caption" value={photoForm.alt} onChange={(e) => setPhotoForm({ ...photoForm, alt: e.target.value })} />
-              <button type="submit" className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-                Add Photo
-              </button>
-              {photoError && <p className="text-xs text-red-400">{photoError}</p>}
-            </form>
-            <div className="mb-8">
-              <p className="text-xs uppercase tracking-wide text-text-muted mb-2">Live Preview</p>
-              <div className="relative aspect-square max-w-[220px] bg-glass-surface border border-border rounded-lg overflow-hidden">
-                {photoForm.url ? (
-                  <img src={photoForm.url} alt={photoForm.alt || "Preview"} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-text-muted">
-                    Image preview
-                  </div>
-                )}
-              </div>
-            </div>
-            {photos.length > 0 && (
-              <button
-                onClick={async () => {
-                  if (apiAvailable) {
-                    try {
-                      await apiSetPhotos([]);
-                      setPhotos([]);
-                      return;
-                    } catch {}
-                  }
-                  setPhotos([]);
-                  saveExtraPhotos([]);
-                }}
-                className="mb-4 px-3 py-1.5 text-xs border border-border rounded-lg text-text-muted hover:text-red-400 hover:border-red-400/50 transition-colors"
-              >
-                Clear All Photos
-              </button>
-            )}
-
-            {photos.length === 0 && (
-              <p className="text-text-muted text-sm text-center py-8">No extra photos added yet.</p>
-            )}
-            <div className="grid grid-cols-3 gap-3">
-              {photos.map((photo) => (
-                <div key={photo.id} className="relative aspect-square bg-glass-surface border border-border rounded-lg overflow-hidden">
-                  <img src={photo.url} alt={photo.alt} className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => removePhoto(photo.id)}
-                    className="absolute top-2 right-2 text-[11px] border border-white/40 bg-black/60 rounded-md px-2 py-1 text-white hover:border-red-300 hover:text-red-200 transition-colors"
-                  >
-                    Delete
-                  </button>
                 </div>
               ))}
             </div>
@@ -1152,6 +982,7 @@ function BlogPanel({ inputClass }) {
     </motion.div>
   );
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════
    Adjustments Panel – wraps Season + Day sections

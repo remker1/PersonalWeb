@@ -8,7 +8,6 @@ const navKeys = [
   { key: "about", href: "#about" },
   { key: "experience", href: "#experience" },
   { key: "projects", href: "#projects" },
-  { key: "photography", href: "#photography" },
   { key: "contact", href: "#contact" },
 ];
 

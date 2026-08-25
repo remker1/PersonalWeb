@@ -2,12 +2,10 @@ import { useState, useEffect } from "react";
 import {
   getExperiences,
   getProjects,
-  getPhotos,
 } from "../api";
 import {
   getExtraExperiences,
   getExtraProjects,
-  getExtraPhotos,
 } from "../data/dynamicContent";
 
 /**
@@ -55,7 +53,6 @@ export function useExperiencesContent() {
   const hasServerData = hasFetched && items.length > 0;
   return { items, hasServerData };
 }
-
 export function useProjectsContent() {
   const [items, setItems] = useState(() => getExtraProjects());
   const [hasFetched, setHasFetched] = useState(false);
@@ -68,31 +65,6 @@ export function useProjectsContent() {
       .then((data) => {
         if (data && data.length > 0) {
           const local = getExtraProjects();
-          setItems(local.length > 0 ? mergeLocalAndDb(local, data) : data);
-        }
-        setHasFetched(true);
-      })
-      .catch(() => setHasFetched(true));
-    return () => window.removeEventListener("storage", onStorage);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const hasServerData = hasFetched && items.length > 0;
-  return { items, hasServerData };
-}
-
-export function usePhotosContent() {
-  const [items, setItems] = useState(() => getExtraPhotos());
-  const [hasFetched, setHasFetched] = useState(false);
-
-  useEffect(() => {
-    const onStorage = () => setItems(getExtraPhotos());
-    window.addEventListener("storage", onStorage);
-
-    getPhotos()
-      .then((data) => {
-        if (data && data.length > 0) {
-          const local = getExtraPhotos();
           setItems(local.length > 0 ? mergeLocalAndDb(local, data) : data);
         }
         setHasFetched(true);

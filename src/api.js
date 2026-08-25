@@ -41,17 +41,6 @@ export async function getProjects() {
   }
 }
 
-export async function getPhotos() {
-  try {
-    const res = await fetch(`${API_BASE}/api/photos`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return Array.isArray(data.items) ? data.items : [];
-  } catch {
-    return [];
-  }
-}
-
 // ——— Translation ———
 
 export async function translateText(q, target) {
@@ -153,31 +142,6 @@ export async function deleteProject(id) {
 
 export async function setProjects(items) {
   const res = await fetch(`${API_BASE}/api/projects`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
-    body: JSON.stringify({ items }),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-export async function addPhoto(item) {
-  const res = await fetch(`${API_BASE}/api/photos`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...getAuthHeader() },
-    body: JSON.stringify(item),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-export async function deletePhoto(id) {
-  const res = await fetch(`${API_BASE}/api/photos/${id}`, { method: "DELETE", headers: getAuthHeader() });
-  if (!res.ok) throw new Error(await res.text());
-}
-
-export async function setPhotos(items) {
-  const res = await fetch(`${API_BASE}/api/photos`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", ...getAuthHeader() },
     body: JSON.stringify({ items }),

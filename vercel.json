@@ -6,10 +6,6 @@
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/photos.js": {
-      "maxDuration": 30,
-      "memory": 1024
-    },
     "api/admin.js": {
       "maxDuration": 30,
       "memory": 1024
