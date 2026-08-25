@@ -4,14 +4,16 @@ import { useT, useDocTitle } from "./testersUtils";
 const SUPPORTS_SINK =
   typeof HTMLMediaElement !== "undefined" && "setSinkId" in HTMLMediaElement.prototype;
 
-// "Twinkle Twinkle Little Star" in C major (C4 D4 E4 F4 G4 A4)
+// "Twinkle Twinkle Little Star" in C major — [frequency, beats]
+// (last note of each phrase is held for two beats)
 const TEST_MELODY = [
-  261.63, 261.63, 392, 392, 440, 440, 392, // Twinkle twinkle little star
-  349.23, 349.23, 329.63, 329.63, 293.66, 293.66, 261.63, // how I wonder what you are
-  392, 392, 349.23, 349.23, 329.63, 329.63, 293.66, // up above the world so high
-  392, 392, 349.23, 349.23, 329.63, 329.63, 293.66, // like a diamond in the sky
+  [261.63, 1], [261.63, 1], [392, 1], [392, 1], [440, 1], [440, 1], [392, 2], // Twinkle twinkle little star
+  [349.23, 1], [349.23, 1], [329.63, 1], [329.63, 1], [293.66, 1], [293.66, 1], [261.63, 2], // how I wonder what you are
+  [392, 1], [392, 1], [349.23, 1], [349.23, 1], [329.63, 1], [329.63, 1], [293.66, 2], // up above the world so high
+  [392, 1], [392, 1], [349.23, 1], [349.23, 1], [329.63, 1], [329.63, 1], [293.66, 2], // like a diamond in the sky
 ];
-const NOTE_DURATION = 0.28;
+const BEAT = 0.42; // seconds per beat
+const TOTAL_BEATS = TEST_MELODY.reduce((sum, [, beats]) => sum + beats, 0);
 
 export default function AudioTester() {
   const t = useT();
@@ -74,7 +76,7 @@ export default function AudioTester() {
     const ctx = getCtx();
     stopMusic();
     const gain = ctx.createGain();
-    gain.gain.value = 0.22;
+    gain.gain.value = 0.16;
     const panner = ctx.createStereoPanner
       ? ctx.createStereoPanner()
       : null;
@@ -89,30 +91,65 @@ export default function AudioTester() {
     const music = { nodes: [], gain, panner, timer: null };
     musicRef.current = music;
 
-    const schedulePass = () => {
-      if (musicRef.current !== music) return;
-      const startAt = ctx.currentTime + 0.05;
-      TEST_MELODY.forEach((frequency, index) => {
-        const noteStart = startAt + index * NOTE_DURATION;
-        const noteEnd = noteStart + NOTE_DURATION * 0.88;
+    // one warm, music-box-like note: layered oscillators through a softening
+    // low-pass filter, shaped by a gentle attack/decay/release envelope
+    const playNote = (frequency, startAt, dur) => {
+      const noteEnd = startAt + dur;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.Q.value = 0.4;
+      filter.frequency.setValueAtTime(2800, startAt);
+      filter.frequency.exponentialRampToValueAtTime(1100, noteEnd);
+
+      const envelope = ctx.createGain();
+      envelope.gain.setValueAtTime(0.0001, startAt);
+      envelope.gain.exponentialRampToValueAtTime(0.7, startAt + 0.015); // soft attack
+      envelope.gain.setTargetAtTime(0.28, startAt + 0.015, 0.14); // decay toward sustain
+      envelope.gain.setTargetAtTime(0.0001, noteEnd - 0.08, 0.04); // release
+      filter.connect(envelope).connect(gain);
+
+      const stopAt = noteEnd + 0.06;
+      const voices = [
+        ["triangle", 0, 1], // fundamental
+        ["sine", 0, 0.55], // rounds out the body
+        ["triangle", 7, 0.3], // slight detune for warmth
+      ].map(([type, detune, level]) => {
         const oscillator = ctx.createOscillator();
-        const envelope = ctx.createGain();
-        oscillator.type = "triangle";
+        oscillator.type = type;
         oscillator.frequency.value = frequency;
-        envelope.gain.setValueAtTime(0.0001, noteStart);
-        envelope.gain.exponentialRampToValueAtTime(0.75, noteStart + 0.025);
-        envelope.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
-        oscillator.connect(envelope).connect(gain);
-        oscillator.start(noteStart);
-        oscillator.stop(noteEnd);
+        oscillator.detune.value = detune;
+        const level_ = ctx.createGain();
+        level_.gain.value = level;
+        oscillator.connect(level_).connect(filter);
+        oscillator.start(startAt);
+        oscillator.stop(stopAt);
+        music.nodes.push(oscillator);
+        return { oscillator, level_ };
+      });
+
+      let ended = 0;
+      voices.forEach(({ oscillator, level_ }) => {
         oscillator.onended = () => {
           oscillator.disconnect();
-          envelope.disconnect();
+          level_.disconnect();
           music.nodes = music.nodes.filter((node) => node !== oscillator);
+          if (++ended === voices.length) {
+            filter.disconnect();
+            envelope.disconnect();
+          }
         };
-        music.nodes.push(oscillator);
       });
-      music.timer = window.setTimeout(schedulePass, TEST_MELODY.length * NOTE_DURATION * 1000);
+    };
+
+    const schedulePass = () => {
+      if (musicRef.current !== music) return;
+      let noteStart = ctx.currentTime + 0.06;
+      TEST_MELODY.forEach(([frequency, beats]) => {
+        const dur = beats * BEAT;
+        playNote(frequency, noteStart, dur * 0.92); // small gap between notes
+        noteStart += dur;
+      });
+      music.timer = window.setTimeout(schedulePass, TOTAL_BEATS * BEAT * 1000);
     };
 
     schedulePass();
