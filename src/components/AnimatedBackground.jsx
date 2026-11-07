@@ -175,10 +175,13 @@ const SEASONS = {
     trees: { dark: "rgba(14,8,4,0.85)", light: "rgba(160,128,85,0.5)" },
     treesPath: BARE_TREES_PATH,
     celestial: {
+      /* Harvest moon — a warm glowing disc with a soft amber halo. */
       dark: {
-        top: "9%", right: "13%", width: 60, height: 60,
-        background: "radial-gradient(circle, rgba(245,210,160,0.16) 0%, rgba(240,200,140,0.05) 50%, transparent 72%)",
-        boxShadow: "0 0 70px 35px rgba(240,200,140,0.04)",
+        top: "9%", right: "13%", width: 88, height: 88,
+        background:
+          "radial-gradient(circle at 38% 36%, rgba(244,238,220,0.9) 0%, rgba(232,220,188,0.72) 42%, rgba(208,192,158,0.34) 66%, rgba(188,172,142,0.1) 80%, transparent 88%)",
+        boxShadow:
+          "0 0 58px 18px rgba(226,216,186,0.15), 0 0 120px 56px rgba(198,186,156,0.06)",
       },
       light: {
         top: "8%", right: "14%", width: 85, height: 85,
@@ -251,6 +254,18 @@ function drawStars(ctx, w, h, t, stars, colorRgb, glowRgb) {
       ctx.arc(sx, sy, s.r * 3.5, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${glowRgb},${a * 0.07})`;
       ctx.fill();
+    }
+    /* Gentle diffraction glint on the brightest stars */
+    if (s.r > 1.6) {
+      const len = s.r * 5;
+      ctx.strokeStyle = `rgba(${glowRgb},${a * 0.22})`;
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(sx - len, sy);
+      ctx.lineTo(sx + len, sy);
+      ctx.moveTo(sx, sy - len);
+      ctx.lineTo(sx, sy + len);
+      ctx.stroke();
     }
   }
 }
@@ -325,7 +340,7 @@ function drawSunRays(ctx, w, h, t, color, alpha) {
    🌸 SPRING  – cherry blossom petals + butterflies
    ═══════════════════════════════════════════════════════════════════ */
 function initSpringParticles() {
-  const petals = Array.from({ length: 55 }, () => ({
+  const petals = Array.from({ length: 46 }, () => ({
     x: Math.random(),
     y: Math.random() * 1.2 - 0.2,
     r: 2 + Math.random() * 4,
@@ -369,13 +384,21 @@ function drawSpring(ctx, w, h, t, dark, particles, seasonCfg) {
     ctx.translate(px, py);
     ctx.rotate(p.rot);
 
-    const baseAlpha = dark ? 0.35 : 0.55;
+    /* Depth: larger (nearer) petals read a touch more solid */
+    const depth = 0.65 + 0.35 * (p.r / 6);
+    const baseAlpha = (dark ? 0.35 : 0.55) * depth;
     const c = p.pink
-      ? (dark ? `rgba(200,140,160,${baseAlpha})` : `rgba(235,170,190,${baseAlpha})`)
-      : (dark ? `rgba(220,200,210,${baseAlpha})` : `rgba(255,235,240,${baseAlpha})`);
+      ? (dark ? `rgba(206,150,168,${baseAlpha})` : `rgba(240,178,198,${baseAlpha})`)
+      : (dark ? `rgba(224,206,214,${baseAlpha})` : `rgba(255,238,243,${baseAlpha})`);
 
+    /* Cherry-blossom petal: rounded with a soft notch at the base */
+    const pr = p.r;
     ctx.beginPath();
-    ctx.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2);
+    ctx.moveTo(0, -pr);
+    ctx.bezierCurveTo(pr, -pr * 0.4, pr * 0.62, pr * 0.9, pr * 0.2, pr);
+    ctx.quadraticCurveTo(0, pr * 0.66, -pr * 0.2, pr);
+    ctx.bezierCurveTo(-pr * 0.62, pr * 0.9, -pr, -pr * 0.4, 0, -pr);
+    ctx.closePath();
     ctx.fillStyle = c;
     ctx.fill();
     ctx.restore();
@@ -417,13 +440,13 @@ function drawSpring(ctx, w, h, t, dark, particles, seasonCfg) {
    ☀️ SUMMER  – fireflies + warm dust motes + heat shimmer
    ═══════════════════════════════════════════════════════════════════ */
 function initSummerParticles() {
-  const fireflies = Array.from({ length: 45 }, () => ({
+  const fireflies = Array.from({ length: 32 }, () => ({
     x: Math.random(),
     y: Math.random(),
-    r: 1 + Math.random() * 2.5,
-    vx: (Math.random() - 0.5) * 0.00025,
-    vy: -0.00008 - Math.random() * 0.00015,
-    pulse: 0.4 + Math.random() * 1.2,
+    r: 1 + Math.random() * 2.3,
+    vx: (Math.random() - 0.5) * 0.0002,
+    vy: -0.00006 - Math.random() * 0.00012,
+    pulse: 0.3 + Math.random() * 0.9,
     phase: Math.random() * Math.PI * 2,
     green: Math.random() > 0.35,
   }));
@@ -445,14 +468,17 @@ function drawSummer(ctx, w, h, t, dark, particles, seasonCfg, frame, stars, mete
       const pulse = 0.2 + 0.8 * ((Math.sin(t * p.pulse + p.phase) + 1) / 2);
       const px = p.x * w;
       const py = p.y * h;
-      const c = p.green ? "140,215,120" : "215,185,90";
+      const c = p.green ? "158,208,148" : "222,198,138";
+      const glow = ctx.createRadialGradient(px, py, 0, px, py, p.r * 5 * pulse);
+      glow.addColorStop(0, `rgba(${c},${pulse * 0.12})`);
+      glow.addColorStop(1, `rgba(${c},0)`);
+      ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(px, py, p.r * pulse, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${c},${pulse * 0.45})`;
+      ctx.arc(px, py, p.r * 5 * pulse, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(px, py, p.r * 4.5 * pulse, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${c},${pulse * 0.055})`;
+      ctx.arc(px, py, p.r * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${c},${pulse * 0.4})`;
       ctx.fill();
     }
 
@@ -484,7 +510,7 @@ function drawSummer(ctx, w, h, t, dark, particles, seasonCfg, frame, stars, mete
    ═══════════════════════════════════════════════════════════════════ */
 function initAutumnParticles() {
   const LEAF_COLORS_DARK = [
-    "180,100,40", "200,120,30", "160,80,30", "190,140,50", "170,60,30",
+    "190,132,84", "202,150,88", "176,116,76", "204,158,106", "186,122,86",
   ];
   const LEAF_COLORS_LIGHT = [
     "220,140,50", "240,160,40", "200,100,40", "230,170,60", "210,80,40",
@@ -514,13 +540,54 @@ function initAutumnParticles() {
     alpha: 0.03 + Math.random() * 0.04,
     phase: Math.random() * Math.PI * 2,
   }));
-  return { leaves, windStreaks };
+  /* Night-only: soft motes drifting upward (calm, cool autumn glow). */
+  const embers = Array.from({ length: 11 }, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: 0.7 + Math.random() * 1.3,
+    vy: 0.00022 + Math.random() * 0.00045,
+    sway: Math.random() * Math.PI * 2,
+    swaySpeed: 0.25 + Math.random() * 0.5,
+    swayAmp: 0.005 + Math.random() * 0.009,
+    flicker: Math.random() * Math.PI * 2,
+    flickerSpeed: 0.7 + Math.random() * 1.3,
+    warm: Math.random() > 0.5,
+  }));
+  /* Night-only: slow low mist near the horizon for depth. */
+  const mist = Array.from({ length: 5 }, () => ({
+    x: Math.random() * 1.4 - 0.2,
+    y: 0.72 + Math.random() * 0.14,
+    r: 0.18 + Math.random() * 0.18,
+    speed: 0.00006 + Math.random() * 0.0001,
+    phase: Math.random() * Math.PI * 2,
+    alpha: 0.05 + Math.random() * 0.05,
+  }));
+  return { leaves, windStreaks, embers, mist };
 }
 
 function drawAutumn(ctx, w, h, t, dark, particles, seasonCfg, frame, stars, meteors) {
   if (dark) {
     drawStars(ctx, w, h, t, stars, seasonCfg.starColor, seasonCfg.starGlow);
     updateMeteors(ctx, w, h, frame, meteors);
+
+    /* Warm low mist drifting along the horizon */
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (const m of particles.mist) {
+      m.x += m.speed;
+      if (m.x > 1.3) m.x = -0.3;
+      const mx = (m.x + Math.sin(t * 0.12 + m.phase) * 0.02) * w;
+      const my = m.y * h;
+      const rad = m.r * w;
+      const g = ctx.createRadialGradient(mx, my, 0, mx, my, rad);
+      g.addColorStop(0, `rgba(120,118,112,${m.alpha})`);
+      g.addColorStop(1, "rgba(120,118,112,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(mx, my, rad, rad * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   } else {
     drawSunRays(ctx, w, h, t, "255,200,120", 0.02);
   }
@@ -552,7 +619,7 @@ function drawAutumn(ctx, w, h, t, dark, particles, seasonCfg, frame, stars, mete
     const ly = lf.y * h;
     const colors = dark ? lf.darkColors : lf.lightColors;
     const c = colors[lf.colorIdx];
-    const a = dark ? 0.4 : 0.65;
+    const a = dark ? 0.52 : 0.65;
     const squash = 0.5 + 0.5 * Math.abs(Math.sin(lf.tumble));
 
     ctx.save();
@@ -575,8 +642,39 @@ function drawAutumn(ctx, w, h, t, dark, particles, seasonCfg, frame, stars, mete
       ctx.beginPath();
       ctx.ellipse(0, 0, lf.r * 0.5, lf.r * squash, 0, 0, Math.PI * 2);
     }
+    if (dark) {
+      ctx.shadowColor = `rgba(${c},0.45)`;
+      ctx.shadowBlur = 5;
+    }
     ctx.fillStyle = `rgba(${c},${a})`;
     ctx.fill();
+    ctx.restore();
+  }
+
+  /* Glowing embers rising (night only) */
+  if (dark) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (const e of particles.embers) {
+      e.y -= e.vy;
+      if (e.y < -0.05) { e.y = 1.05; e.x = Math.random(); }
+      const ex = (e.x + Math.sin(t * e.swaySpeed + e.sway) * e.swayAmp) * w;
+      const ey = e.y * h;
+      const flick = 0.5 + 0.5 * Math.sin(t * e.flickerSpeed + e.flicker);
+      const a = 0.12 + 0.3 * flick;
+      const col = e.warm ? "226,206,162" : "198,200,186";
+      const glow = ctx.createRadialGradient(ex, ey, 0, ex, ey, e.r * 7);
+      glow.addColorStop(0, `rgba(${col},${a * 0.5})`);
+      glow.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(ex, ey, e.r * 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex, ey, e.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(234,230,212,${a})`;
+      ctx.fill();
+    }
     ctx.restore();
   }
 }
@@ -658,6 +756,18 @@ function drawWinter(ctx, w, h, t, dark, particles, seasonCfg, frame, stars, mete
     const sx = sf.x * w;
     const sy = sf.y * h;
     const a = sf.opacity * (dark ? 0.5 : 0.7);
+
+    /* Soft luminous halo on the larger (nearer) flakes */
+    if (sf.r > 1.9) {
+      const gc = dark ? "190,206,235" : "255,255,255";
+      const halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, sf.r * 3.2);
+      halo.addColorStop(0, `rgba(${gc},${a * 0.35})`);
+      halo.addColorStop(1, `rgba(${gc},0)`);
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(sx, sy, sf.r * 3.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.beginPath();
     ctx.arc(sx, sy, sf.r, 0, Math.PI * 2);

@@ -49,7 +49,14 @@ export default function About() {
           >
             <p className="text-text-secondary leading-relaxed mb-4">
               {t.about.bio1}
-              <span className="text-text-primary">{t.about.university}</span>
+              <a
+                href="https://www.usask.ca"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent hover:underline"
+              >
+                {t.about.university}
+              </a>
               {t.about.bio1End}
             </p>
             <p className="text-text-secondary leading-relaxed">
