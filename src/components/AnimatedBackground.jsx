@@ -336,6 +336,284 @@ function drawSunRays(ctx, w, h, t, color, alpha) {
   ctx.restore();
 }
 
+/* ── Shared: per-theme cursor-follow effect ──
+   Each season leaves a different trail from the pointer plus a tinted aura. */
+const CURSOR_TINT = {
+  spring: "255,200,214",
+  summer: "170,205,150",
+  autumn: "232,178,120",
+  winter: "188,208,238",
+};
+
+function makeCursorParticle(season, p) {
+  const ang = Math.random() * Math.PI * 2;
+  const spd = 0.3 + Math.random() * 0.8;
+  const q = {
+    x: p.x,
+    y: p.y,
+    vx: p.vx * 0.15 + Math.cos(ang) * spd,
+    vy: p.vy * 0.15 + Math.sin(ang) * spd,
+    life: 1,
+    rot: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.15,
+    size: 2 + Math.random() * 3,
+    phase: Math.random() * Math.PI * 2,
+  };
+  switch (season) {
+    case "spring":
+      q.vy += 0.3; q.decay = 0.009; q.size = 3 + Math.random() * 3;
+      q.pink = Math.random() > 0.35; break;
+    case "summer":
+      q.vy -= 0.2; q.decay = 0.012; q.size = 1.4 + Math.random() * 2;
+      q.green = Math.random() > 0.4; break;
+    case "autumn":
+      q.vy += 0.4; q.decay = 0.007; q.size = 3 + Math.random() * 3; break;
+    case "winter":
+      q.vy += 0.15; q.decay = 0.009; q.size = 1.4 + Math.random() * 2.2; break;
+    default: q.decay = 0.01;
+  }
+  return q;
+}
+
+function drawCursorFX(ctx, w, h, t, dark, season, pointer, parts, fx) {
+  if (pointer.active) {
+    /* Soft tinted aura following the pointer */
+    const tint = CURSOR_TINT[season] || "220,220,220";
+    const R = 90;
+    const aura = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, R);
+    aura.addColorStop(0, `rgba(${tint},${dark ? 0.09 : 0.06})`);
+    aura.addColorStop(1, `rgba(${tint},0)`);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(pointer.x, pointer.y, R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    /* Spawn trail particles as the pointer moves (summer orbits instead) */
+    const dist = Math.hypot(pointer.x - pointer.spawnX, pointer.y - pointer.spawnY);
+    if (season !== "summer" && dist > 16 && parts.length < 90) {
+      const n = Math.min(3, Math.floor(dist / 16));
+      for (let i = 0; i < n; i++) parts.push(makeCursorParticle(season, pointer));
+      pointer.spawnX = pointer.x;
+      pointer.spawnY = pointer.y;
+    }
+  }
+
+  const alive = [];
+  for (const q of parts) {
+    q.x += q.vx;
+    q.y += q.vy;
+    q.rot += q.rotSpeed;
+    q.vx *= 0.97;
+    q.vy = q.vy * 0.97 + (season === "summer" ? -0.004 : 0.012);
+    q.life -= q.decay;
+    if (q.life <= 0) continue;
+    alive.push(q);
+
+    const l = q.life;
+    ctx.save();
+    ctx.translate(q.x, q.y);
+
+    if (season === "spring") {
+      ctx.rotate(q.rot);
+      const a = l * 0.6;
+      const col = q.pink
+        ? (dark ? "206,150,168" : "240,178,198")
+        : (dark ? "224,206,214" : "255,238,243");
+      const pr = q.size;
+      ctx.beginPath();
+      ctx.moveTo(0, -pr);
+      ctx.bezierCurveTo(pr, -pr * 0.4, pr * 0.62, pr * 0.9, pr * 0.2, pr);
+      ctx.quadraticCurveTo(0, pr * 0.66, -pr * 0.2, pr);
+      ctx.bezierCurveTo(-pr * 0.62, pr * 0.9, -pr, -pr * 0.4, 0, -pr);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(${col},${a})`;
+      ctx.fill();
+    } else if (season === "summer") {
+      const pulse = 0.5 + 0.5 * Math.sin(t * 3 + q.phase);
+      const a = l * (0.3 + 0.4 * pulse);
+      const col = q.green ? "158,208,148" : "222,198,138";
+      ctx.globalCompositeOperation = "lighter";
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, q.size * 5);
+      g.addColorStop(0, `rgba(${col},${a * 0.5})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, 0, q.size * 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(${col},${a})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, q.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (season === "autumn") {
+      ctx.rotate(q.rot);
+      const a = l * 0.6;
+      const col = dark ? "198,146,96" : "220,140,60";
+      const squash = 0.5 + 0.5 * Math.abs(Math.sin(q.rot * 1.5));
+      if (dark) { ctx.shadowColor = `rgba(${col},0.4)`; ctx.shadowBlur = 4; }
+      ctx.beginPath();
+      ctx.ellipse(0, 0, q.size * 0.55, q.size * squash, 0, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${col},${a})`;
+      ctx.fill();
+    } else {
+      /* winter */
+      const tw = 0.5 + 0.5 * Math.sin(t * 4 + q.phase);
+      const a = l * (0.4 + 0.4 * tw);
+      const col = dark ? "200,216,240" : "255,255,255";
+      ctx.globalCompositeOperation = "lighter";
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, q.size * 3.2);
+      g.addColorStop(0, `rgba(${col},${a * 0.5})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, 0, q.size * 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(${col},${a})`;
+      ctx.beginPath();
+      ctx.arc(0, 0, q.size * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  parts.length = 0;
+  parts.push(...alive);
+
+  /* Summer: a swarm of fireflies circling the pointer */
+  if (season === "summer" && pointer.active) drawFireflyOrbit(ctx, t, dark, pointer, fx);
+
+  /* Winter: a little snowman that keeps its eyes on the pointer */
+  if (season === "winter") drawSnowman(ctx, w, h, dark, pointer, fx);
+}
+
+/* Summer night — fireflies orbiting the cursor */
+function drawFireflyOrbit(ctx, t, dark, pointer, fx) {
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (const o of fx.orbiters) {
+    o.ang += 0.02 * o.speed;
+    const rad = o.rad + Math.sin(t * 0.8 + o.radPhase) * 6;
+    const tx = pointer.x + Math.cos(o.ang) * rad;
+    const ty = pointer.y + Math.sin(o.ang) * rad * 0.72;
+    if (!o.init) { o.x = tx; o.y = ty; o.init = true; }
+    o.x += (tx - o.x) * 0.12;
+    o.y += (ty - o.y) * 0.12;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 3 + o.radPhase);
+    const a = (dark ? 0.55 : 0.4) * (0.4 + 0.6 * pulse);
+    const col = o.green ? "158,208,148" : "222,198,138";
+    const r = o.r;
+    const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, r * 5);
+    g.addColorStop(0, `rgba(${col},${a * 0.5})`);
+    g.addColorStop(1, `rgba(${col},0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r * 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = `rgba(${col},${a})`;
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* Winter — a little snowman whose eyes follow the pointer */
+function drawSnowman(ctx, w, h, dark, pointer, fx) {
+  const k = Math.max(0.7, Math.min(w, h) / 820);
+  const bottomR = 30 * k, midR = 21 * k, headR = 14 * k;
+  const cx = Math.max(bottomR + 16, w * 0.1);
+  const groundY = h * 0.9;
+  const bottomCy = groundY - bottomR;
+  const midCy = bottomCy - bottomR - midR * 0.72;
+  const headCy = midCy - midR - headR * 0.72;
+
+  const body = dark ? "226,233,246" : "248,251,255";
+  const bodyA = dark ? 0.7 : 0.82;
+  const shade = dark ? "150,165,195" : "205,215,232";
+  const coal = dark ? "55,62,80" : "45,52,68";
+
+  ctx.save();
+
+  /* ground shadow */
+  ctx.fillStyle = dark ? "rgba(0,0,0,0.18)" : "rgba(80,90,110,0.12)";
+  ctx.beginPath();
+  ctx.ellipse(cx, groundY + 2, bottomR * 1.1, bottomR * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* stick arms */
+  ctx.strokeStyle = dark ? "rgba(120,95,70,0.75)" : "rgba(110,80,55,0.8)";
+  ctx.lineWidth = 2 * k;
+  ctx.beginPath();
+  ctx.moveTo(cx - midR * 0.5, midCy);
+  ctx.lineTo(cx - midR * 1.8, midCy - midR * 0.7);
+  ctx.moveTo(cx - midR * 1.3, midCy - midR * 0.28);
+  ctx.lineTo(cx - midR * 1.55, midCy - midR * 1.1);
+  ctx.moveTo(cx + midR * 0.5, midCy);
+  ctx.lineTo(cx + midR * 1.8, midCy - midR * 0.7);
+  ctx.moveTo(cx + midR * 1.3, midCy - midR * 0.28);
+  ctx.lineTo(cx + midR * 1.55, midCy - midR * 1.1);
+  ctx.stroke();
+
+  /* three snowballs with a soft shaded side */
+  const ball = (cyc, r) => {
+    ctx.beginPath();
+    ctx.arc(cx, cyc, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${body},${bodyA})`;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + r * 0.28, cyc + r * 0.26, r * 0.78, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${shade},${bodyA * 0.22})`;
+    ctx.fill();
+  };
+  ball(bottomCy, bottomR);
+  ball(midCy, midR);
+  ball(headCy, headR);
+
+  /* coal buttons */
+  ctx.fillStyle = `rgba(${coal},${bodyA})`;
+  for (let i = -1; i <= 1; i++) {
+    ctx.beginPath();
+    ctx.arc(cx, midCy + i * midR * 0.45, 1.7 * k, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* eyes that watch the pointer */
+  const eyeDX = headR * 0.4, eyeY = headCy - headR * 0.12, eyeR = headR * 0.22;
+  const maxOff = eyeR * 0.5;
+  const px = pointer.active ? pointer.x : cx + headR * 4;
+  const py = pointer.active ? pointer.y : eyeY;
+  const eyeXs = [cx - eyeDX, cx + eyeDX];
+  for (let i = 0; i < 2; i++) {
+    const ex = eyeXs[i];
+    const dx = px - ex, dy = py - eyeY;
+    const d = Math.hypot(dx, dy) || 1;
+    fx.eye[i].x += ((dx / d) * maxOff - fx.eye[i].x) * 0.15;
+    fx.eye[i].y += ((dy / d) * maxOff - fx.eye[i].y) * 0.15;
+    ctx.beginPath();
+    ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(250,252,255,${bodyA})`;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(ex + fx.eye[i].x, eyeY + fx.eye[i].y, eyeR * 0.52, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${coal},${Math.min(1, bodyA + 0.12)})`;
+    ctx.fill();
+  }
+
+  /* carrot nose pointing toward the pointer */
+  const dir = pointer.active ? (Math.sign(pointer.x - cx) || 1) : 1;
+  const noseY = headCy + headR * 0.12;
+  ctx.beginPath();
+  ctx.moveTo(cx, noseY - 2 * k);
+  ctx.lineTo(cx, noseY + 2 * k);
+  ctx.lineTo(cx + dir * headR * 0.72, noseY);
+  ctx.closePath();
+  ctx.fillStyle = `rgba(228,126,58,${bodyA})`;
+  ctx.fill();
+
+  ctx.restore();
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    🌸 SPRING  – cherry blossom petals + butterflies
    ═══════════════════════════════════════════════════════════════════ */
@@ -847,6 +1125,38 @@ export default function AnimatedBackground() {
     const autumnP = initAutumnParticles();
     const winterP = initWinterParticles();
 
+    /* Pointer-follow effect state (per-theme) */
+    const pointer = { x: 0, y: 0, vx: 0, vy: 0, spawnX: 0, spawnY: 0, active: false };
+    const cursorParticles = [];
+    const fx = {
+      orbiters: Array.from({ length: 7 }, (_, i) => ({
+        ang: (i / 7) * Math.PI * 2,
+        rad: 26 + Math.random() * 20,
+        radPhase: Math.random() * Math.PI * 2,
+        speed: 0.6 + Math.random() * 0.6,
+        r: 1.4 + Math.random() * 1.4,
+        green: Math.random() > 0.4,
+        x: 0, y: 0, init: false,
+      })),
+      eye: [{ x: 0, y: 0 }, { x: 0, y: 0 }],
+    };
+    const onPointerMove = (e) => {
+      const nx = e.clientX;
+      const ny = e.clientY;
+      if (!pointer.active) {
+        pointer.active = true;
+        pointer.spawnX = nx;
+        pointer.spawnY = ny;
+      }
+      pointer.vx = nx - pointer.x;
+      pointer.vy = ny - pointer.y;
+      pointer.x = nx;
+      pointer.y = ny;
+    };
+    const onPointerLeave = () => { pointer.active = false; };
+    window.addEventListener("mousemove", onPointerMove);
+    window.addEventListener("mouseleave", onPointerLeave);
+
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -880,6 +1190,9 @@ export default function AnimatedBackground() {
           break;
       }
 
+      /* Per-theme pointer-follow effect, drawn on top */
+      drawCursorFX(ctx, w, h, t, dark, s, pointer, cursorParticles, fx);
+
       animId = requestAnimationFrame(loop);
     };
 
@@ -887,6 +1200,8 @@ export default function AnimatedBackground() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onPointerMove);
+      window.removeEventListener("mouseleave", onPointerLeave);
     };
   }, []);
 
