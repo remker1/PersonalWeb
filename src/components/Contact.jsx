@@ -71,7 +71,7 @@ export default function Contact() {
             </svg>
           </motion.a>
           <motion.a
-            href="https://linkedin.com"
+            href="https://www.linkedin.com/in/sihan-leo-liu"
             target="_blank"
             rel="noopener noreferrer"
             className="text-text-muted hover:text-text-primary transition-colors"
