@@ -24,6 +24,7 @@ export default function AudioTester() {
   const musicRef = useRef(null);
   const sinkAudioRef = useRef(null);
   const [activePan, setActivePan] = useState(null); // -1 | 0 | 1 | null
+  const activePanRef = useRef(null); // mirrors activePan for click-race–proof toggling
   const [outputs, setOutputs] = useState([]);
   const [outputId, setOutputId] = useState("");
 
@@ -52,24 +53,46 @@ export default function AudioTester() {
     const music = musicRef.current;
     if (music) {
       window.clearTimeout(music.timer);
-      music.nodes.forEach((node) => {
+      musicRef.current = null; // any pending schedulePass now bails out
+      const ctx = ctxRef.current;
+      const now = ctx ? ctx.currentTime : 0;
+      const FADE = 0.05; // fade the whole voice out to avoid a click/pop on stop
+
+      // Ramp the shared gain to (near) zero so every scheduled note — the one
+      // currently sounding and any still queued — is silenced smoothly at once.
+      try {
+        const g = music.gain.gain;
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(Math.max(g.value, 0.0001), now);
+        g.exponentialRampToValueAtTime(0.0001, now + FADE);
+      } catch { /* automation unavailable */ }
+
+      const nodes = music.nodes;
+      music.nodes = [];
+      nodes.forEach((node) => {
         node.onended = null;
         try {
-          node.stop();
+          node.stop(now + FADE + 0.02); // stop after the fade, never mid-waveform
         } catch { /* already stopped */ }
-        node.disconnect();
       });
-      try {
-        music.gain.disconnect();
-        music.panner?.disconnect();
-      } catch { /* already disconnected */ }
-      musicRef.current = null;
+
+      // Tear the graph down once the fade has finished.
+      window.setTimeout(() => {
+        nodes.forEach((n) => {
+          try { n.disconnect(); } catch { /* already disconnected */ }
+        });
+        try {
+          music.gain.disconnect();
+          music.panner?.disconnect();
+        } catch { /* already disconnected */ }
+      }, (FADE + 0.1) * 1000);
     }
+    activePanRef.current = null;
     setActivePan(null);
   };
 
   const playMusic = (pan) => {
-    if (activePan === pan) {
+    if (activePanRef.current === pan) {
       stopMusic();
       return;
     }
@@ -153,6 +176,7 @@ export default function AudioTester() {
     };
 
     schedulePass();
+    activePanRef.current = pan;
     setActivePan(pan);
   };
 
@@ -225,8 +249,8 @@ export default function AudioTester() {
         setLevel(Math.min(1, Math.sqrt(sum / data.length) * 3));
 
         const canvas = canvasRef.current;
-        if (canvas) {
-          const c = canvas.getContext("2d");
+        const c = canvas && canvas.getContext("2d");
+        if (c) {
           const { width, height } = canvas;
           c.clearRect(0, 0, width, height);
           c.strokeStyle = getComputedStyle(document.documentElement)

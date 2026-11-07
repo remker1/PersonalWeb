@@ -119,7 +119,8 @@ export default function TrackpadTester() {
 
   const clearTrail = () => {
     const canvas = canvasRef.current;
-    if (canvas) canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    const ctx = canvas && canvas.getContext("2d");
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     lastPosRef.current = null;
     setHz(0);
     setMaxHz(0);
