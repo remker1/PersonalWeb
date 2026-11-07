@@ -35,7 +35,7 @@ function createPgPool() {
     host,
     port: parseInt(process.env.DB_PORT || process.env.PGPORT || "5432", 10),
     user: process.env.DB_USER || process.env.PGUSER || "remker1",
-    password: process.env.DB_PASSWORD || process.env.PGPASSWORD || "REDACTED",
+    password: process.env.DB_PASSWORD || process.env.PGPASSWORD,
     database: process.env.DB_NAME || process.env.PGDATABASE || "remker1_web",
   });
 }
