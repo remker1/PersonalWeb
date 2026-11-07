@@ -177,11 +177,11 @@ const SEASONS = {
     celestial: {
       /* Harvest moon — a warm glowing disc with a soft amber halo. */
       dark: {
-        top: "9%", right: "13%", width: 88, height: 88,
+        top: "11%", right: "15%", width: 72, height: 72,
         background:
-          "radial-gradient(circle at 38% 36%, rgba(244,238,220,0.9) 0%, rgba(232,220,188,0.72) 42%, rgba(208,192,158,0.34) 66%, rgba(188,172,142,0.1) 80%, transparent 88%)",
+          "radial-gradient(circle at 44% 42%, rgba(232,222,196,0.62) 0%, rgba(214,200,168,0.42) 34%, rgba(192,176,144,0.22) 56%, rgba(166,150,122,0.08) 75%, transparent 90%)",
         boxShadow:
-          "0 0 58px 18px rgba(226,216,186,0.15), 0 0 120px 56px rgba(198,186,156,0.06)",
+          "0 0 44px 10px rgba(216,204,172,0.08), 0 0 96px 42px rgba(184,168,138,0.04)",
       },
       light: {
         top: "8%", right: "14%", width: 85, height: 85,
@@ -340,7 +340,7 @@ function drawSunRays(ctx, w, h, t, color, alpha) {
    Each season leaves a different trail from the pointer plus a tinted aura. */
 const CURSOR_TINT = {
   spring: "255,200,214",
-  summer: "170,205,150",
+  summer: "214,206,168",
   autumn: "232,178,120",
   winter: "188,208,238",
 };
@@ -480,40 +480,62 @@ function drawCursorFX(ctx, w, h, t, dark, season, pointer, parts, fx) {
   parts.length = 0;
   parts.push(...alive);
 
-  /* Summer: a swarm of fireflies circling the pointer */
-  if (season === "summer" && pointer.active) drawFireflyOrbit(ctx, t, dark, pointer, fx);
+  /* Summer: night = fireflies gently trailing the pointer; day = soft pollen motes */
+  if (season === "summer" && pointer.active) drawSummerFollow(ctx, t, dark, pointer, fx);
 
   /* Winter: a little snowman that keeps its eyes on the pointer */
   if (season === "winter") drawSnowman(ctx, w, h, dark, pointer, fx);
 }
 
-/* Summer night — fireflies orbiting the cursor */
-function drawFireflyOrbit(ctx, t, dark, pointer, fx) {
+/* Summer — a small swarm that loosely, slowly follows the cursor.
+   Night: glowing fireflies. Day (no fireflies): airy pollen motes. */
+function drawSummerFollow(ctx, t, dark, pointer, fx) {
   ctx.save();
-  ctx.globalCompositeOperation = "lighter";
+  if (dark) ctx.globalCompositeOperation = "lighter";
   for (const o of fx.orbiters) {
-    o.ang += 0.02 * o.speed;
-    const rad = o.rad + Math.sin(t * 0.8 + o.radPhase) * 6;
-    const tx = pointer.x + Math.cos(o.ang) * rad;
-    const ty = pointer.y + Math.sin(o.ang) * rad * 0.72;
+    /* A slowly drifting, wandering target around the pointer — not a rigid orbit */
+    o.ang += 0.006 * o.speed;
+    const rad = o.rad + Math.sin(t * o.wSpeed + o.wPhase) * 12;
+    const tx = pointer.x + Math.cos(o.ang) * rad + Math.cos(t * 0.45 + o.wPhase) * 9;
+    const ty = pointer.y + Math.sin(o.ang) * rad * 0.8 + Math.sin(t * 0.37 + o.wPhase) * 9;
     if (!o.init) { o.x = tx; o.y = ty; o.init = true; }
-    o.x += (tx - o.x) * 0.12;
-    o.y += (ty - o.y) * 0.12;
-    const pulse = 0.5 + 0.5 * Math.sin(t * 3 + o.radPhase);
-    const a = (dark ? 0.55 : 0.4) * (0.4 + 0.6 * pulse);
-    const col = o.green ? "158,208,148" : "222,198,138";
-    const r = o.r;
-    const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, r * 5);
-    g.addColorStop(0, `rgba(${col},${a * 0.5})`);
-    g.addColorStop(1, `rgba(${col},0)`);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, r * 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = `rgba(${col},${a})`;
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
-    ctx.fill();
+    /* Loose easing so they lag and trail the pointer rather than snapping to it */
+    o.x += (tx - o.x) * 0.045;
+    o.y += (ty - o.y) * 0.045;
+
+    const pulse = 0.5 + 0.5 * Math.sin(t * 1.5 + o.wPhase);
+
+    if (dark) {
+      const a = 0.5 * (0.45 + 0.55 * pulse);
+      const col = o.green ? "158,208,148" : "222,198,138";
+      const r = o.r;
+      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, r * 5);
+      g.addColorStop(0, `rgba(${col},${a * 0.5})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r * 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(${col},${a})`;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      /* Daytime: warm golden pollen catching the sun — airy, no firefly glow */
+      const a = 0.5 * (0.6 + 0.4 * pulse);
+      const r = o.r * 0.95;
+      const g = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, r * 3.6);
+      g.addColorStop(0, `rgba(236,196,118,${a * 0.5})`);
+      g.addColorStop(1, "rgba(236,196,118,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r * 3.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(206,166,88,${a})`;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, r * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.restore();
 }
@@ -1131,9 +1153,10 @@ export default function AnimatedBackground() {
     const fx = {
       orbiters: Array.from({ length: 7 }, (_, i) => ({
         ang: (i / 7) * Math.PI * 2,
-        rad: 26 + Math.random() * 20,
-        radPhase: Math.random() * Math.PI * 2,
-        speed: 0.6 + Math.random() * 0.6,
+        rad: 28 + Math.random() * 24,
+        speed: 0.5 + Math.random() * 0.6,
+        wSpeed: 0.25 + Math.random() * 0.4,
+        wPhase: Math.random() * Math.PI * 2,
         r: 1.4 + Math.random() * 1.4,
         green: Math.random() > 0.4,
         x: 0, y: 0, init: false,
