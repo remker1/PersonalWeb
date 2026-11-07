@@ -3,17 +3,18 @@ import { useLanguage } from "../contexts/LanguageContext";
 
 const skills = [
   "JavaScript",
-  "TypeScript",
   "React",
   "Node.js",
   "Python",
   "Java",
   "SQL",
-  "Git",
-  "HTML/CSS",
-  "REST APIs",
-  "Linux",
+  "NoSQL",
+  "Flutter",
   "Docker",
+  "Git",
+  "Linux",
+  "AWS",
+  "REST APIs",
 ];
 
 export default function About() {

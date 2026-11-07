@@ -10,9 +10,9 @@ const translations = {
     hero: {
       greeting: "Hello, I'm",
       name: "remker1",
-      title: "Software Developer & Photographer",
+      title: "Software Developer",
       description:
-        "Computer Science graduate from the University of Saskatchewan. Building software by day, capturing moments through the lens in my free time.",
+        "Computer Science graduate from the University of Saskatchewan with over a year of professional experience spanning hardware diagnostics, internal tooling, and full-stack development. I build reliable software and enjoy solving hard problems.",
       viewWork: "View My Work",
       getInTouch: "Get in Touch",
     },
@@ -21,8 +21,8 @@ const translations = {
       bio1: "I'm a Computer Science graduate from the ",
       university: "University of Saskatchewan",
       bio1End:
-        " with a passion for building clean, functional software. I enjoy working across the full stack — from designing intuitive user interfaces to building robust backend systems.",
-      bio2: "Outside of coding, photography is my creative outlet. I love exploring the world through a lens, capturing landscapes, street scenes, and everyday moments that tell a story.",
+        " with over a year of professional experience at Uniway Computers spanning hardware diagnostics, internal tool development, and server-side data management — backed by a strong software-development foundation and hands-on use of AI-assisted tools to ship features efficiently.",
+      bio2: "Proficient in Java, Node.js, SQL, NoSQL, and Docker, I'm a resilient, motivated problem-solver who thrives under pressure — effective both independently and on a team, and eager to apply my skills in a dynamic software-development role.",
       techHeading: "Technologies & Tools",
     },
     experience: {
@@ -66,9 +66,9 @@ const translations = {
     hero: {
       greeting: "你好，我是",
       name: "remker1",
-      title: "软件开发者 & 摄影爱好者",
+      title: "软件开发者",
       description:
-        "萨斯喀彻温大学计算机科学专业毕业。白天编写代码，闲暇时用镜头捕捉生活中的美好瞬间。",
+        "萨斯喀彻温大学计算机科学专业毕业，拥有一年以上的专业经验，涵盖硬件诊断、内部工具开发和全栈开发。我专注于构建可靠的软件，乐于解决有挑战的问题。",
       viewWork: "查看作品",
       getInTouch: "联系我",
     },
@@ -77,8 +77,8 @@ const translations = {
       bio1: "我毕业于",
       university: "萨斯喀彻温大学",
       bio1End:
-        "计算机科学专业，热爱构建简洁、实用的软件。我喜欢全栈开发——从设计直观的用户界面到构建稳健的后端系统。",
-      bio2: "在编程之外，摄影是我的创意出口。我喜欢用镜头探索世界，捕捉风景、街头场景和日常生活中的动人瞬间。",
+        "计算机科学专业，拥有一年以上在 Uniway Computers 的专业经验，涵盖硬件诊断、内部工具开发和服务器端数据管理——并以扎实的软件开发基础和对 AI 辅助开发工具的实践运用高效交付功能。",
+      bio2: "精通 Java、Node.js、SQL、NoSQL 和 Docker，我是一个坚韧、积极的问题解决者，能在压力下稳定发挥——无论独立工作还是团队协作都同样高效，期待在充满活力的软件开发岗位上施展所长。",
       techHeading: "技术与工具",
     },
     experience: {
@@ -119,9 +119,9 @@ const translations = {
     hero: {
       greeting: "Bonjour, je suis",
       name: "remker1",
-      title: "Développeur logiciel & Photographe",
+      title: "Développeur logiciel",
       description:
-        "Diplômé en informatique de l'Université de la Saskatchewan. Je développe des logiciels le jour et capture des moments à travers l'objectif pendant mon temps libre.",
+        "Diplômé en informatique de l'Université de la Saskatchewan avec plus d'un an d'expérience professionnelle couvrant le diagnostic matériel, les outils internes et le développement full-stack. Je conçois des logiciels fiables et j'aime résoudre des problèmes complexes.",
       viewWork: "Voir mes travaux",
       getInTouch: "Me contacter",
     },
@@ -130,8 +130,8 @@ const translations = {
       bio1: "Je suis diplômé en informatique de l'",
       university: "Université de la Saskatchewan",
       bio1End:
-        ", passionné par la création de logiciels propres et fonctionnels. J'aime travailler sur l'ensemble de la pile — de la conception d'interfaces utilisateur intuitives à la construction de systèmes backend robustes.",
-      bio2: "En dehors du code, la photographie est mon exutoire créatif. J'aime explorer le monde à travers un objectif, capturer des paysages, des scènes de rue et des moments du quotidien qui racontent une histoire.",
+        ", avec plus d'un an d'expérience professionnelle chez Uniway Computers couvrant le diagnostic matériel, le développement d'outils internes et la gestion de données côté serveur — le tout appuyé par de solides bases en développement logiciel et une utilisation concrète d'outils assistés par IA pour livrer des fonctionnalités efficacement.",
+      bio2: "Maîtrisant Java, Node.js, SQL, NoSQL et Docker, je suis un résolveur de problèmes résilient et motivé qui s'épanouit sous pression — efficace aussi bien en autonomie qu'en équipe, et désireux de mettre mes compétences au service d'un poste dynamique en développement logiciel.",
       techHeading: "Technologies et outils",
     },
     experience: {
